@@ -1,5 +1,5 @@
 // components/builder/Builder.tsx
-import React, { useState, useCallback, useMemo, useImperativeHandle, forwardRef } from 'react';
+import { useState, useCallback, useMemo, useImperativeHandle, forwardRef } from 'react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Module, Block, Landing } from '@/types/builder';

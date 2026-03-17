@@ -4,7 +4,6 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Block } from '@/types/builder';
 import BlockRenderer from '@/components/blocks/BlockRenderer';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { GripVertical, Pencil, Trash2 } from 'lucide-react';
 

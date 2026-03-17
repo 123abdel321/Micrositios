@@ -19,30 +19,6 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Edit({ modules, landing }: Props) {
-    const [blocks, setBlocks] = useState<Block[]>(() => {
-        // Si hay bloques en la landing, transformarlos
-        if (landing.blocks && landing.blocks.length > 0) {
-            return landing.blocks.map((submission: any) => {
-                // Construir objeto Block
-                const block: Block = {
-                    id: submission.id,
-                    module_id: submission.module_id,
-                    module_slug: submission.module?.slug || '',
-                    module_name: submission.module?.name || '',
-                    order: submission.order || 0,
-                    values: {},
-                };
-                // Llenar values desde field_values
-                if (submission.field_values && submission.field_values.length > 0) {
-                    submission.field_values.forEach((fv: any) => {
-                        block.values[fv.component.name] = fv.value;
-                    });
-                }
-                return block;
-            });
-        }
-        return [];
-    });
     const [isSaving, setIsSaving] = useState(false);
     const builderRef = useRef<BuilderRef>(null);
 
