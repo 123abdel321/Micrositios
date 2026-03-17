@@ -9,7 +9,7 @@ interface Props {
     onUpdate: (values: Record<string, any>) => void;
 }
 
-const BlockEditor: React.FC<Props> = ({ block, modules, onUpdate }) => {
+const BlockEditor: React.FC<Props> = ({ block, modules }) => {
     // Encontrar el módulo al que pertenece este bloque
     const moduleDef = useMemo(() => {
         return modules.find(m => m.id === block.module_id);
