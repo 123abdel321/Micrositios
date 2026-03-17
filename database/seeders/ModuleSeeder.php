@@ -60,7 +60,7 @@ class ModuleSeeder extends Seeder
             ],
         ]);
 
-        // Módulo Hero
+        // Módulo Hero (mejorado)
         $hero = Module::create([
             'name' => 'Hero',
             'description' => 'Sección principal de la página de inicio',
@@ -107,22 +107,108 @@ class ModuleSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            // Nuevos campos:
             [
                 'module_id' => $hero->id,
-                'label' => 'Botón de acción',
-                'name' => 'cta_button',
-                'type' => 'external',
-                'placeholder' => null,
+                'label' => 'Color de fondo',
+                'name' => 'background_color',
+                'type' => 'color',
+                'placeholder' => '#ffffff',
                 'is_required' => false,
                 'order' => 4,
-                'validation_rules' => json_encode(['nullable', 'array']),
-                'data_source' => env('ERP_API_URL') . '/cta-config',
+                'validation_rules' => json_encode(['nullable', 'string']),
+                'data_source' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'module_id' => $hero->id,
+                'label' => 'Color del texto',
+                'name' => 'text_color',
+                'type' => 'color',
+                'placeholder' => '#000000',
+                'is_required' => false,
+                'order' => 5,
+                'validation_rules' => json_encode(['nullable', 'string']),
+                'data_source' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'module_id' => $hero->id,
+                'label' => 'Texto del botón',
+                'name' => 'button_text',
+                'type' => 'text',
+                'placeholder' => 'Llamada a la acción',
+                'is_required' => false,
+                'order' => 6,
+                'validation_rules' => json_encode(['nullable', 'string', 'max:50']),
+                'data_source' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'module_id' => $hero->id,
+                'label' => 'URL del botón',
+                'name' => 'button_url',
+                'type' => 'text',
+                'placeholder' => 'https://ejemplo.com',
+                'is_required' => false,
+                'order' => 7,
+                'validation_rules' => json_encode(['nullable', 'url']),
+                'data_source' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'module_id' => $hero->id,
+                'label' => 'Estilo del botón',
+                'name' => 'button_style',
+                'type' => 'select',
+                'placeholder' => null,
+                'is_required' => false,
+                'order' => 8,
+                'validation_rules' => json_encode(['nullable', 'string']),
+                'data_source' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
         ]);
 
-        // Módulo Footer
+        // Opciones para estilo del botón
+        $buttonStyleComp = Component::where('module_id', $hero->id)
+            ->where('name', 'button_style')
+            ->first();
+        if ($buttonStyleComp) {
+            ComponentOption::insert([
+                [
+                    'component_id' => $buttonStyleComp->id,
+                    'label' => 'Primario',
+                    'value' => 'primary',
+                    'order' => 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+                [
+                    'component_id' => $buttonStyleComp->id,
+                    'label' => 'Secundario',
+                    'value' => 'secondary',
+                    'order' => 2,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+                [
+                    'component_id' => $buttonStyleComp->id,
+                    'label' => 'Outline',
+                    'value' => 'outline',
+                    'order' => 3,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+            ]);
+        }
+
+        // Módulo Footer (mejorado: social_networks como texto)
         $footer = Module::create([
             'name' => 'Footer',
             'description' => 'Pie de página del sitio',
@@ -158,48 +244,17 @@ class ModuleSeeder extends Seeder
             ],
             [
                 'module_id' => $footer->id,
-                'label' => 'Redes sociales',
+                'label' => 'Redes sociales (separadas por comas)',
                 'name' => 'social_networks',
-                'type' => 'select',
-                'placeholder' => null,
+                'type' => 'text', // Cambiado de select a text
+                'placeholder' => 'facebook, twitter, instagram',
                 'is_required' => false,
                 'order' => 3,
-                'validation_rules' => json_encode(['nullable', 'array']),
+                'validation_rules' => json_encode(['nullable', 'string']),
                 'data_source' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
         ]);
-
-        // Opciones para redes sociales
-        $socialComponent = Component::where('name', 'social_networks')->first();
-        if ($socialComponent) {
-            ComponentOption::insert([
-                [
-                    'component_id' => $socialComponent->id,
-                    'label' => 'Facebook',
-                    'value' => 'facebook',
-                    'order' => 1,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ],
-                [
-                    'component_id' => $socialComponent->id,
-                    'label' => 'Twitter',
-                    'value' => 'twitter',
-                    'order' => 2,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ],
-                [
-                    'component_id' => $socialComponent->id,
-                    'label' => 'Instagram',
-                    'value' => 'instagram',
-                    'order' => 3,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ],
-            ]);
-        }
     }
 }

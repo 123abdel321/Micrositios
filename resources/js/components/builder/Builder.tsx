@@ -35,19 +35,16 @@ const Builder = forwardRef<BuilderRef, Props>(({ modules, landing, onSave }, ref
     const [blocks, setBlocks] = useState<Block[]>(landing.blocks || []);
     const [selectedBlockIndex, setSelectedBlockIndex] = useState<number | null>(null);
 
-    // Exponer método getBlocks al padre
     useImperativeHandle(ref, () => ({
         getBlocks: () => blocks,
     }));
 
-    // Mapa para búsqueda rápida de módulos
     const moduleMap = useMemo(() => {
         const map = new Map<number, Module>();
         modules.forEach(m => map.set(m.id, m));
         return map;
     }, [modules]);
 
-    // Sensores para drag & drop
     const sensors = useSensors(
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, {
@@ -58,7 +55,7 @@ const Builder = forwardRef<BuilderRef, Props>(({ modules, landing, onSave }, ref
     const handleAddBlock = useCallback((module: Module) => {
         const newBlock = createBlockFromModule(module, blocks.length);
         setBlocks([...blocks, newBlock]);
-        setSelectedBlockIndex(blocks.length); // seleccionar el nuevo bloque
+        setSelectedBlockIndex(blocks.length);
     }, [blocks]);
 
     const handleDeleteBlock = useCallback((index: number) => {
@@ -88,21 +85,20 @@ const Builder = forwardRef<BuilderRef, Props>(({ modules, landing, onSave }, ref
         }
     }, []);
 
-    // Preparar items para SortableContext (necesitan un id único)
     const itemsWithId = blocks.map((block, index) => ({
         ...block,
         uniqueId: block.id || `new-${index}`,
     }));
 
     return (
-        <div className="flex h-screen">
+        <div className="flex h-full overflow-hidden">
             {/* Panel izquierdo: bloques disponibles */}
-            <div className="w-64">
+            <div className="w-64 border-r overflow-y-auto">
                 <BlocksPanel modules={modules} onAddBlock={handleAddBlock} />
             </div>
 
             {/* Área central: canvas con bloques */}
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-y-auto">
                 <DndContext
                     sensors={sensors}
                     collisionDetection={closestCenter}
@@ -123,7 +119,7 @@ const Builder = forwardRef<BuilderRef, Props>(({ modules, landing, onSave }, ref
             </div>
 
             {/* Panel derecho: propiedades del bloque seleccionado */}
-            <div className="w-80">
+            <div className="w-80 border-l overflow-y-auto">
                 <PropertiesPanel
                     block={selectedBlockIndex !== null ? blocks[selectedBlockIndex] : null}
                     moduleMap={moduleMap}

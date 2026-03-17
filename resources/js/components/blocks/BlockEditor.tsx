@@ -128,10 +128,7 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
     };
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-lg">Editar {module.name}</CardTitle>
-            </CardHeader>
+        <div>
             <CardContent className="space-y-4">
                 {sortedComponents.map((comp) => (
                     <div key={comp.id} className="space-y-1">
@@ -148,7 +145,7 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
                     </div>
                 ))}
             </CardContent>
-        </Card>
+        </div>
     );
 };
 

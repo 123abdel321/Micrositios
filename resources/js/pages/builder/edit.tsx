@@ -5,15 +5,20 @@ import Builder, { BuilderRef } from '@/components/builder/Builder';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import type { Module, Landing, Block } from '@/types/builder';
+import type { BreadcrumbItem } from '@/types';
 
 interface Props {
     modules: Module[];
     landing: Landing;
 }
 
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Dashboard', href: '/dashboard' },
+    { title: 'Landings', href: '/builder' },
+    { title: 'Construir Landing', href: '#' },
+];
+
 export default function Edit({ modules, landing }: Props) {
-    console.log('Landing recibida:', landing);
-    console.log('Bloques en landing:', landing.blocks);
     const [blocks, setBlocks] = useState<Block[]>(() => {
         // Si hay bloques en la landing, transformarlos
         if (landing.blocks && landing.blocks.length > 0) {
@@ -64,7 +69,7 @@ export default function Edit({ modules, landing }: Props) {
     };
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Editando ${landing.name}`} />
             <div className="flex flex-col h-full">
                 <div className="border-b p-4 flex justify-between items-center">

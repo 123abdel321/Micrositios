@@ -1,4 +1,3 @@
-// components/blocks/FooterBlock.tsx
 import React from 'react';
 
 interface Props {
@@ -9,11 +8,17 @@ interface Props {
 const FooterBlock: React.FC<Props> = ({ values, isPreview = false }) => {
     const { copyright, footer_links, social_networks } = values;
 
-    // Mapeo de redes sociales a iconos (puedes usar lucide-react)
+    // Procesar social_networks: puede ser string separado por comas o array
+    const socialList = typeof social_networks === 'string'
+        ? social_networks.split(',').map(s => s.trim()).filter(Boolean)
+        : Array.isArray(social_networks) ? social_networks : [];
+
     const socialIcons: Record<string, string> = {
         facebook: 'fb',
         twitter: 'tw',
         instagram: 'ig',
+        linkedin: 'in',
+        youtube: 'yt',
     };
 
     return (
@@ -43,10 +48,10 @@ const FooterBlock: React.FC<Props> = ({ values, isPreview = false }) => {
                     <div>
                         <h3 className="font-semibold mb-4">Redes sociales</h3>
                         <div className="flex space-x-4">
-                            {Array.isArray(social_networks) && social_networks.length > 0 ? (
-                                social_networks.map((net: string, idx: number) => (
+                            {socialList.length > 0 ? (
+                                socialList.map((net, idx) => (
                                     <a key={idx} href="#" className="text-2xl hover:text-primary">
-                                        {socialIcons[net] || net}
+                                        {socialIcons[net] || net.slice(0, 2).toUpperCase()}
                                     </a>
                                 ))
                             ) : (
