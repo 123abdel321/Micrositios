@@ -21,7 +21,7 @@ interface Props {
 // Tab type para móvil
 type MobileTab = 'blocks' | 'canvas' | 'properties';
 
-const Builder = forwardRef<BuilderRef, Props>(({ modules, landing, onSave }, ref) => {
+const Builder = forwardRef<BuilderRef, Props>(({ modules, landing }, ref) => {
     const [blocks, setBlocks] = useState<Block[]>(landing.blocks || []);
     const [selectedBlockIndex, setSelectedBlockIndex] = useState<number | null>(null);
     const [mobileTab, setMobileTab] = useState<MobileTab>('canvas');

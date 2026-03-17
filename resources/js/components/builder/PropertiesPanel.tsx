@@ -3,7 +3,7 @@ import React from 'react';
 import { Block, Module } from '@/types/builder';
 import BlockEditor from '@/components/blocks/BlockEditor';
 import { AlignVerticalDistributeCenter  } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface Props {
     block: Block | null;

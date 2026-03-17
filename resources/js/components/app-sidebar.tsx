@@ -1,7 +1,6 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, FolderGit2, LayoutGrid, Menu, Search, LayoutTemplate } from 'lucide-react';
+import { BookOpen, FolderGit2, LayoutGrid, LayoutTemplate } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
-import { route } from 'ziggy-js';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';

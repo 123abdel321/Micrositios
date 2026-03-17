@@ -4,7 +4,7 @@ import AppLayout from '@/layouts/app-layout';
 import Builder, { BuilderRef } from '@/components/builder/Builder';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import type { Module, Landing, Block } from '@/types/builder';
+import type { Module, Landing } from '@/types/builder';
 import type { BreadcrumbItem } from '@/types';
 
 interface Props {
