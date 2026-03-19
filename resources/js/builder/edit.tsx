@@ -23,6 +23,7 @@ interface Props {
 }
 
 export default function Edit({ landing, modules, blocks: initialBlocks }: Props) {
+
     const [blocks, setBlocks] = useState<Block[]>(initialBlocks);
     const [selectedBlock, setSelectedBlock] = useState<Block | null>(null);
 

@@ -145,7 +145,7 @@ const Builder = forwardRef<BuilderRef, Props>(({ modules, landing }, ref) => {
             </div>
 
             {/* ── TABLET/DESKTOP: Layout horizontal ── */}
-            <div className="hidden md:flex flex-1 overflow-hidden">
+            <div className="hidden md:flex flex-1 h-full overflow-hidden">
 
                 {/* Panel izquierdo */}
                 <div className="w-56 lg:w-64 border-r overflow-y-auto shrink-0">
@@ -157,8 +157,7 @@ const Builder = forwardRef<BuilderRef, Props>(({ modules, landing }, ref) => {
                     {canvasContent}
                 </div>
 
-                {/* Panel derecho — se oculta en md si no hay bloque seleccionado, 
-                    ahorras espacio en tablet */}
+                {/* Panel derecho */}
                 <div className={`border-l overflow-y-auto shrink-0 transition-all duration-200
                     ${selectedBlockIndex !== null
                         ? 'w-72 lg:w-80'

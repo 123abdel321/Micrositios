@@ -12,6 +12,7 @@ interface Props {
 }
 
 const PropertiesPanel: React.FC<Props> = ({ block, moduleMap, onBlockChange }) => {
+
     if (!block) {
         return (
             <div className="h-full flex flex-col">
@@ -34,7 +35,7 @@ const PropertiesPanel: React.FC<Props> = ({ block, moduleMap, onBlockChange }) =
     if (!module) return null;
 
     return (
-        <Card className="h-full rounded-none border-l shadow-none">
+        <Card className="h-windows rounded-none border-l shadow-none">
             <CardHeader className="px-4">
                 <CardTitle className="text-lg flex items-center gap-2">
                     <AlignVerticalDistributeCenter  className="h-5 w-5" />

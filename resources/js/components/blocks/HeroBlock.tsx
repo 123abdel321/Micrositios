@@ -1,60 +1,147 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface Props {
     values: Record<string, any>;
     isPreview?: boolean;
+    theme?: 'light' | 'dark';
 }
 
-const HeroBlock: React.FC<Props> = ({ values, isPreview = false }) => {
+const HeroBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'light' }) => {
+    const [mounted, setMounted] = useState(false);
+    
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    // Valores según tema
+    const bgColor = theme === 'dark' ? values.bg_color_dark : values.bg_color_light;
+    const textColor = theme === 'dark' ? values.text_color_dark : values.text_color_light;
+    
     const {
         title,
         subtitle,
         background_image,
-        background_color,
-        text_color,
+        bg_image_size = 'cover',
+        bg_image_position = 'center',
+        hero_min_height = 400,
+        hero_max_height = 800,
+        bg_image_repeat = false,
+        enable_parallax = false,
+        parallax_speed = 0.5,
+        enable_overlay = false,
+        overlay_color = '#000000',
+        overlay_opacity = 0.5,
+        content_alignment = 'center',
+        padding_top = 40,
+        padding_bottom = 40,
         button_text,
         button_url,
-        button_style,
+        button_style = 'primary'
     } = values;
 
     const heroStyle: React.CSSProperties = {
         backgroundImage: background_image ? `url(${background_image})` : undefined,
-        backgroundColor: background_color || undefined,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        color: text_color || undefined,
+        backgroundColor: bgColor || undefined,
+        backgroundSize: bg_image_size,
+        backgroundPosition: bg_image_position,
+        backgroundRepeat: bg_image_repeat ? 'repeat' : 'no-repeat',
+        color: textColor || undefined,
+        minHeight: typeof hero_min_height === 'number' ? `${hero_min_height}px` : hero_min_height,
+        maxHeight: typeof hero_max_height === 'number' ? `${hero_max_height}px` : hero_max_height,
+        paddingTop: typeof padding_top === 'number' ? `${padding_top}px` : padding_top,
+        paddingBottom: typeof padding_bottom === 'number' ? `${padding_bottom}px` : padding_bottom,
+        position: 'relative',
+        ...(enable_parallax && {
+            backgroundAttachment: 'fixed',
+            backgroundPosition: `50% ${parallax_speed * 100}%`
+        })
     };
 
     const getButtonClasses = () => {
+        const baseClasses = "inline-block px-6 py-3 rounded-md transition-all duration-300 font-medium";
         switch (button_style) {
             case 'secondary':
-                return 'bg-secondary text-secondary-foreground hover:bg-secondary/90';
+                return `${baseClasses} bg-secondary text-secondary-foreground hover:bg-secondary/90`;
             case 'outline':
-                return 'border border-input bg-background hover:bg-accent hover:text-accent-foreground';
+                return `${baseClasses} border-2 border-current bg-transparent hover:bg-current hover:text-background`;
             default:
-                return 'bg-primary text-primary-foreground hover:bg-primary/90';
+                return `${baseClasses} bg-primary text-primary-foreground hover:bg-primary/90`;
         }
     };
 
+    const getAlignmentClass = () => {
+        switch (content_alignment) {
+            case 'left':
+                return 'text-left items-start';
+            case 'right':
+                return 'text-right items-end';
+            default:
+                return 'text-center items-center';
+        }
+    };
+
+    if (!mounted) return null;
+
     return (
-        <section style={heroStyle} className="w-full py-20 px-6">
-            <div className="container mx-auto text-center">
-                <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                    {title || 'Título principal'}
-                </h1>
-                <p className="text-xl mb-8 max-w-2xl mx-auto">
-                    {subtitle || 'Subtítulo de la sección hero'}
-                </p>
-                {(button_text || button_url) && (
-                    <a
+        <section style={heroStyle} className="w-full relative overflow-hidden">
+            {/* Overlay */}
+            {enable_overlay && (
+                <div 
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: overlay_color,
+                        opacity: overlay_opacity,
+                        zIndex: 1
+                    }}
+                />
+            )}
+            
+            {/* Contenido */}
+            <div 
+                className={`container mx-auto h-full flex flex-col justify-center ${getAlignmentClass()} relative`}
+                style={{ 
+                    zIndex: 2,
+                    minHeight: 'inherit'
+                }}
+            >
+                { title ? (
+                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
+                        {title}
+                    </h1>
+                ) : null}
+                
+                { subtitle ? (
+                    <p className="text-xl md:text-2xl mb-8 max-w-2xl">
+                        {subtitle}
+                    </p>
+                ) : null}
+
+
+                { button_text && !button_url && (
+                    <a 
                         href={button_url || '#'}
-                        className={`inline-block px-6 py-3 rounded-md transition-colors ${getButtonClasses()}`}
+                        className={getButtonClasses()}
                     >
                         {button_text || 'Llamada a la acción'}
                     </a>
                 )}
+                
                 {isPreview && (
-                    <div className="mt-4 text-xs text-muted-foreground">[Hero]</div>
+                    <div 
+                        className="text-xs opacity-60 bg-black/50 text-white px-2 py-1 rounded"
+                        style={{ 
+                            position: 'absolute', 
+                            top: '20px', 
+                            left: '30px',
+                            zIndex: 50
+                        }}
+                    >
+                        [Hero]
+                    </div>
                 )}
             </div>
         </section>

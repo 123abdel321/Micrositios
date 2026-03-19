@@ -14,7 +14,6 @@ interface Props {
 }
 
 const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
-
     const sortedComponents = [...module.components].sort((a, b) => a.order - b.order);
 
     const toInputValue = (v: unknown): string | number => {
@@ -64,20 +63,29 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
                 );
 
             case 'select':
+                console.log('component: ',component);
                 return (
                     <Select
-                        value={toSelectValue(value)}
+                        value={value ? String(value) : ""}
                         onValueChange={(val) => onChange(component.name, val)}
                     >
                         <SelectTrigger id={component.name}>
                             <SelectValue placeholder="Selecciona una opción" />
                         </SelectTrigger>
-                        <SelectContent>
-                            {component.options?.map((opt) => (
-                                <SelectItem key={opt.id} value={opt.value}>
-                                    {opt.label}
-                                </SelectItem>
-                            ))}
+
+                        <SelectContent
+                                position="popper"
+                                className="z-[9999] max-h-60 overflow-y-auto"
+                            >
+                            {Array.isArray(component.options) &&
+                                component.options.map((opt) => (
+                                    <SelectItem
+                                        key={opt.id}
+                                        value={String(opt.value)}
+                                    >
+                                        {opt.label}
+                                    </SelectItem>
+                                ))}
                         </SelectContent>
                     </Select>
                 );
@@ -122,6 +130,33 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
                     </div>
                 );
 
+            case 'range': {
+                const options =
+                    !Array.isArray(component.configuration) && component.configuration
+                        ? component.configuration
+                        : { min: 0, max: 100, step: 1, unit: '' };
+
+                return (
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-4">
+                            <Input
+                                type="range"
+                                id={component.name}
+                                min={options.min}
+                                max={options.max}
+                                step={options.step}
+                                value={Number(value) || 0}
+                                onChange={(e) => onChange(component.name, Number(e.target.value))}
+                                className="flex-1"
+                            />
+                            <span className="text-sm font-mono min-w-[60px]">
+                                {value}{options.unit}
+                            </span>
+                        </div>
+                    </div>
+                );
+            }
+
             default:
                 return null;
         }
@@ -129,7 +164,7 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
 
     return (
         <div>
-            <CardContent className="space-y-4">
+            <CardContent className="h-[calc(100vh-120px)] overflow-y-auto space-y-4 custom-scrollbar">
                 {sortedComponents.map((comp) => (
                     <div key={comp.id} className="space-y-1">
                         <Label htmlFor={comp.name}>

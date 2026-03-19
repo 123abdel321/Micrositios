@@ -1,60 +1,89 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface Props {
     values: Record<string, any>;
     isPreview?: boolean;
+    theme?: 'light' | 'dark';
 }
 
-// Función para determinar si un color es oscuro
-function isDarkColor(hex: string): boolean {
-    if (!hex) return false;
-    let r, g, b;
-    if (hex.startsWith('#')) {
-        const rgb = parseInt(hex.slice(1), 16);
-        r = (rgb >> 16) & 0xff;
-        g = (rgb >> 8) & 0xff;
-        b = (rgb >> 0) & 0xff;
-    } else {
-        return false;
-    }
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    return luminance < 0.5;
-}
+const HeaderBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'light' }) => {
+    const [mounted, setMounted] = useState(false);
+    
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
-const HeaderBlock: React.FC<Props> = ({ values, isPreview = false }) => {
-    const { logo, background_color, menu_items } = values;
-    const bgColor = background_color || '#ffffff';
-    const dark = isDarkColor(bgColor);
-    const textColorClass = dark ? 'text-white' : 'text-black';
-    const linkHoverClass = dark ? 'hover:text-gray-300' : 'hover:text-primary';
+    // Seleccionar valores según el tema
+    const logo = theme === 'dark' ? values.logo_dark : values.logo_light;
+    const bgColor = theme === 'dark' ? values.bg_color_dark : values.bg_color_light;
+    const textColor = theme === 'dark' ? values.text_color_dark : values.text_color_light;
+    
+    const {
+        menu_items = [],
+        header_height = 80,
+        logo_position = 'left'
+    } = values;
+
+    const headerStyle: React.CSSProperties = {
+        backgroundColor: bgColor || (theme === 'dark' ? '#1a1a1a' : '#ffffff'),
+        color: textColor || (theme === 'dark' ? '#ffffff' : '#000000'),
+        height: typeof header_height === 'number' ? `${header_height}px` : `${parseInt(header_height)}px`,
+        transition: 'all 0.3s ease'
+    };
+
+    if (!mounted) return null;
 
     return (
-        <header style={{ backgroundColor: bgColor }} className={`w-full py-4 px-6 border-b ${textColorClass}`}>
-            <div className="container mx-auto flex items-center justify-between">
-                <div className="flex items-center">
+        <header style={headerStyle} className="w-full px-6 border-b">
+            <div className={`container mx-auto h-full flex items-center`}>
+                <div className={`flex items-center w-full justify-start`}>
                     {logo ? (
-                        <img src={logo} alt="Logo" className="h-10 w-auto" />
+                        <img 
+                            src={logo} 
+                            alt="Logo" 
+                            className="h-10 w-auto"
+                            style={{ 
+                                filter: theme === 'dark' ? 'brightness(1.2)' : 'none'
+                            }}
+                        />
                     ) : (
                         <span className="text-xl font-bold">Logo</span>
                     )}
                 </div>
-                <nav className="hidden md:flex space-x-6">
+                
+                <nav className="hidden md:flex space-x-6 ml-auto">
                     {Array.isArray(menu_items) && menu_items.length > 0 ? (
                         menu_items.map((item: any, idx: number) => (
-                            <a key={idx} href={item.url || '#'} className={`${linkHoverClass} transition-colors`}>
+                            <a 
+                                key={idx} 
+                                href={item.url || '#'} 
+                                className="hover:opacity-80 transition-opacity"
+                                style={{ color: 'inherit' }}
+                            >
                                 {item.label || 'Enlace'}
                             </a>
                         ))
                     ) : (
                         <>
-                            <a href="#" className={`${linkHoverClass} transition-colors`}>Inicio</a>
-                            <a href="#" className={`${linkHoverClass} transition-colors`}>Acerca</a>
-                            <a href="#" className={`${linkHoverClass} transition-colors`}>Contacto</a>
+                            <a href="#" className="hover:opacity-80">Inicio</a>
+                            <a href="#" className="hover:opacity-80">Acerca</a>
+                            <a href="#" className="hover:opacity-80">Contacto</a>
                         </>
                     )}
                 </nav>
+                
                 {isPreview && (
-                    <div className="text-xs text-muted-foreground">[Header]</div>
+                    <div 
+                        className="text-xs opacity-60 bg-black/50 text-white px-2 py-1 rounded"
+                        style={{ 
+                            position: 'absolute', 
+                            top: '20px', 
+                            left: '30px',
+                            zIndex: 50
+                        }}
+                    >
+                        [Header]
+                    </div>
                 )}
             </div>
         </header>

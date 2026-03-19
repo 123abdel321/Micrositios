@@ -10,12 +10,13 @@ class Component extends Model
 {
     protected $fillable = [
         'module_id', 'label', 'name', 'type', 'placeholder',
-        'is_required', 'order', 'validation_rules', 'data_source'
+        'is_required', 'order', 'validation_rules', 'data_source', 'configuration'
     ];
 
     protected $casts = [
         'is_required' => 'boolean',
         'validation_rules' => 'array',
+        'configuration' => 'array',
     ];
 
     public function module(): BelongsTo

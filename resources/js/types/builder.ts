@@ -20,6 +20,7 @@ export interface Component {
     order: number;
     validation_rules: string[] | null;
     data_source: string | null;
+    configuration: string[] | null; 
     options?: ComponentOption[];
 }
 

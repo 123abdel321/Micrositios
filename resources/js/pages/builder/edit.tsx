@@ -25,8 +25,7 @@ export default function Edit({ modules, landing }: Props) {
     const handleSave = async () => {
         // Obtener los bloques actuales desde el componente Builder
         const blocks = builderRef.current?.getBlocks() || [];
-        console.log('handleSave', blocks);
-
+        
         setIsSaving(true);
         router.post(
             `/builder/${landing.id}/save`,
