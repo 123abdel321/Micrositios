@@ -63,13 +63,12 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
                 );
 
             case 'select':
-                console.log('component: ',component);
                 return (
                     <Select
                         value={value ? String(value) : ""}
                         onValueChange={(val) => onChange(component.name, val)}
                     >
-                        <SelectTrigger id={component.name}>
+                        <SelectTrigger id={component.name} className="w-full">
                             <SelectValue placeholder="Selecciona una opción" />
                         </SelectTrigger>
 

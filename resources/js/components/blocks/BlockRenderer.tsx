@@ -41,9 +41,21 @@ const BlockRenderer: React.FC<Props> = ({ block, isPreview = false }) => {
                 />
             );
         case 'hero':
-            return <HeroBlock values={block.values} isPreview={isPreview} />;
+            return (
+                <HeroBlock
+                    values={block.values}
+                    isPreview={isPreview}
+                    theme={effectiveTheme}
+                />
+            );
         case 'footer':
-            return <FooterBlock values={block.values} isPreview={isPreview} />;
+            return (
+                <FooterBlock
+                    values={block.values}
+                    isPreview={isPreview}
+                    theme={effectiveTheme}
+                />
+            );
         default:
             return (
                 <div className="p-4 border border-dashed border-gray-300 rounded-lg text-gray-500">

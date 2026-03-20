@@ -20,8 +20,7 @@ const HeaderBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'ligh
     
     const {
         menu_items = [],
-        header_height = 80,
-        logo_position = 'left'
+        header_height = 80
     } = values;
 
     const headerStyle: React.CSSProperties = {
@@ -34,7 +33,22 @@ const HeaderBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'ligh
     if (!mounted) return null;
 
     return (
-        <header style={headerStyle} className="w-full px-6 border-b">
+        <header style={headerStyle} className="w-full px-6">
+            {/* Preview */}
+            {isPreview && (
+                <div 
+                    className="text-xs opacity-60 bg-black/50 text-white px-2 py-1 rounded"
+                    style={{
+                        position: 'absolute',
+                        bottom: 25,
+                        left: 25,
+                        zIndex: 50
+                    }}
+                >
+                    [Header]
+                </div>
+            )}
+            {/* Contenido */}
             <div className={`container mx-auto h-full flex items-center`}>
                 <div className={`flex items-center w-full justify-start`}>
                     {logo ? (
@@ -71,20 +85,7 @@ const HeaderBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'ligh
                         </>
                     )}
                 </nav>
-                
-                {isPreview && (
-                    <div 
-                        className="text-xs opacity-60 bg-black/50 text-white px-2 py-1 rounded"
-                        style={{ 
-                            position: 'absolute', 
-                            top: '20px', 
-                            left: '30px',
-                            zIndex: 50
-                        }}
-                    >
-                        [Header]
-                    </div>
-                )}
+
             </div>
         </header>
     );

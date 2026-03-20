@@ -50,8 +50,8 @@ const FooterBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'ligh
     const footerStyle: React.CSSProperties = {
         backgroundColor: bgColor || (theme === 'dark' ? '#1a1a1a' : '#f8f9fa'),
         color: textColor || (theme === 'dark' ? '#ffffff' : '#333333'),
-        paddingTop: typeof padding_top === 'number' ? `${padding_top}px` : padding_top,
-        paddingBottom: typeof padding_bottom === 'number' ? `${padding_bottom}px` : padding_bottom,
+        paddingTop: typeof padding_top === 'number' ? `${padding_top}px` : `${parseInt(padding_top)}px`,
+        paddingBottom: typeof padding_bottom === 'number' ? `${padding_bottom}px` : `${parseInt(padding_bottom)}px`,
         ...(show_top_border && {
             borderTop: `1px solid ${border_color}`
         })
@@ -145,6 +145,20 @@ const FooterBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'ligh
 
     return (
         <footer style={footerStyle} className="w-full">
+            {/* Preview indicator */}
+            {isPreview && (
+                <div 
+                    className="text-xs opacity-60 bg-black/50 text-white px-2 py-1 rounded"
+                    style={{
+                        position: 'absolute',
+                        bottom: 25,
+                        left: 25,
+                        zIndex: 50
+                    }}
+                >
+                    [Footers]
+                </div>
+            )}
             <div className={getContainerClass()}>
                 {/* Redes sociales arriba */}
                 {show_social && social_position === 'top' && (
@@ -177,21 +191,6 @@ const FooterBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'ligh
                 <div className="text-sm text-center pt-6 border-t border-current/20">
                     <p>{copyright_text}</p>
                 </div>
-
-                {/* Preview indicator */}
-                {isPreview && (
-                    <div 
-                        className="text-xs opacity-60 bg-black/50 text-white px-2 py-1 rounded"
-                        style={{ 
-                            position: 'absolute', 
-                            top: '20px', 
-                            left: '30px',
-                            zIndex: 50
-                        }}
-                    >
-                        [Footer]
-                    </div>
-                )}
             </div>
         </footer>
     );

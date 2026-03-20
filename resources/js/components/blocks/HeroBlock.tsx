@@ -26,11 +26,6 @@ const HeroBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'light'
         hero_min_height = 400,
         hero_max_height = 800,
         bg_image_repeat = false,
-        enable_parallax = false,
-        parallax_speed = 0.5,
-        enable_overlay = false,
-        overlay_color = '#000000',
-        overlay_opacity = 0.5,
         content_alignment = 'center',
         padding_top = 40,
         padding_bottom = 40,
@@ -38,24 +33,22 @@ const HeroBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'light'
         button_url,
         button_style = 'primary'
     } = values;
-
+    
     const heroStyle: React.CSSProperties = {
         backgroundImage: background_image ? `url(${background_image})` : undefined,
         backgroundColor: bgColor || undefined,
         backgroundSize: bg_image_size,
         backgroundPosition: bg_image_position,
-        backgroundRepeat: bg_image_repeat ? 'repeat' : 'no-repeat',
+        backgroundRepeat: bg_image_repeat == 1 ? 'repeat' : 'no-repeat',
         color: textColor || undefined,
-        minHeight: typeof hero_min_height === 'number' ? `${hero_min_height}px` : hero_min_height,
-        maxHeight: typeof hero_max_height === 'number' ? `${hero_max_height}px` : hero_max_height,
-        paddingTop: typeof padding_top === 'number' ? `${padding_top}px` : padding_top,
-        paddingBottom: typeof padding_bottom === 'number' ? `${padding_bottom}px` : padding_bottom,
+        minHeight: typeof hero_min_height === 'number' ? `${hero_min_height}px` : `${parseInt(hero_min_height)}px`,
+        maxHeight: typeof hero_max_height === 'number' ? `${hero_max_height}px` : `${parseInt(hero_max_height)}px`,
+        paddingTop: typeof padding_top === 'number' ? `${padding_top}px` : `${parseInt(padding_top)}px`,
+        paddingBottom: typeof padding_bottom === 'number' ? `${padding_bottom}px` : `${parseInt(padding_bottom)}px`,
         position: 'relative',
-        ...(enable_parallax && {
-            backgroundAttachment: 'fixed',
-            backgroundPosition: `50% ${parallax_speed * 100}%`
-        })
     };
+
+    console.log('heroStyle: ', heroStyle);
 
     const getButtonClasses = () => {
         const baseClasses = "inline-block px-6 py-3 rounded-md transition-all duration-300 font-medium";
@@ -83,23 +76,21 @@ const HeroBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'light'
     if (!mounted) return null;
 
     return (
-        <section style={heroStyle} className="w-full relative overflow-hidden">
-            {/* Overlay */}
-            {enable_overlay && (
+        <section style={heroStyle} className="relative overflow-hidden">
+            {/* Preview */}
+            {isPreview && (
                 <div 
+                    className="text-xs opacity-60 bg-black/50 text-white px-2 py-1 rounded"
                     style={{
                         position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        backgroundColor: overlay_color,
-                        opacity: overlay_opacity,
-                        zIndex: 1
+                        bottom: 10,
+                        left: 10,
+                        zIndex: 50
                     }}
-                />
+                >
+                    [Hero]
+                </div>
             )}
-            
             {/* Contenido */}
             <div 
                 className={`container mx-auto h-full flex flex-col justify-center ${getAlignmentClass()} relative`}
@@ -130,19 +121,6 @@ const HeroBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'light'
                     </a>
                 )}
                 
-                {isPreview && (
-                    <div 
-                        className="text-xs opacity-60 bg-black/50 text-white px-2 py-1 rounded"
-                        style={{ 
-                            position: 'absolute', 
-                            top: '20px', 
-                            left: '30px',
-                            zIndex: 50
-                        }}
-                    >
-                        [Hero]
-                    </div>
-                )}
             </div>
         </section>
     );
