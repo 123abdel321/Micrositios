@@ -22,7 +22,7 @@ class LandingController extends Controller
         if (isset($data['blocks']) && is_string($data['blocks'])) {
             $data['blocks'] = json_decode($data['blocks'], true);
         }
-
+        dd($data['blocks']);
         try {
             // 2. Validar (Si falla, Laravel lanza automáticamente una ValidationException)
             $validated = validator($data, [
@@ -50,10 +50,12 @@ class LandingController extends Controller
                         ->first();
 
                     if ($component) {
+                        $storedValue = $this->processValueForStorage($component, $value);
+                        
                         FieldValue::create([
                             'submission_id' => $submission->id,
                             'component_id' => $component->id,
-                            'value' => is_array($value) ? json_encode($value) : $value,
+                            'value' => $storedValue,
                         ]);
                     }
                 }
@@ -139,15 +141,14 @@ class LandingController extends Controller
         $blocks = $landing->blocks->map(function ($submission) {
             $values = [];
             foreach ($submission->fieldValues as $fv) {
-                $values[$fv->component->name] = $fv->value;
+                $values[$fv->component->name] = $this->processValueForDisplay($fv->component, $fv->value);
             }
             $submission->setAttribute('values', $values);
-            // 👇 ESTA LÍNEA ES LA QUE FALTA
             $submission->setAttribute('module_slug', $submission->module->slug);
             return $submission;
         });
 
-        $modules = Module::with('components.options')->get();
+        $modules = Module::with('components')->get();
 
         return inertia('builder/edit', [
             'landing' => $landing,
@@ -159,7 +160,7 @@ class LandingController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Landing $landing)
     {
         $request->validate([
             'name' => 'required|string|max:255',
@@ -177,5 +178,65 @@ class LandingController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    /**
+     * Procesa el valor para almacenarlo según el tipo de componente
+     */
+    private function processValueForStorage($component, $value)
+    {
+        // Si es null o vacío
+        if ($value === null || $value === '') {
+            return null;
+        }
+        
+        // Para selects, verificar si es múltiple
+        if ($component->type === 'select') {
+            // configuration ya es array gracias al cast
+            $config = $component->configuration ?? [];
+            $isMultiple = $config['is_multiple'] ?? false;
+            
+            if ($isMultiple && is_array($value)) {
+                return json_encode($value);
+            }
+        }
+        
+        // Para arrays en general
+        if (is_array($value)) {
+            return json_encode($value);
+        }
+        
+        // Para valores simples
+        return $value;
+    }
+    
+    /**
+     * Procesa el valor para mostrarlo según el tipo de componente
+     */
+    private function processValueForDisplay($component, $value)
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        
+        // Para selects, verificar si es múltiple
+        if ($component->type === 'select') {
+            // configuration ya es array gracias al cast
+            $config = $component->configuration ?? [];
+            $isMultiple = $config['is_multiple'] ?? false;
+            
+            if ($isMultiple) {
+                $decoded = json_decode($value, true);
+                return is_array($decoded) ? $decoded : $value;
+            }
+        }
+        
+        // Para external
+        if ($component->type === 'external') {
+            $decoded = json_decode($value, true);
+            return is_array($decoded) ? $decoded : $value;
+        }
+        
+        return $value;
     }
 }

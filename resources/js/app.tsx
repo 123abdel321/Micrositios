@@ -1,8 +1,10 @@
+// D:\Documentos\micrositios\resources\js\app.tsx
 import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { AppDataProvider } from '@/contexts/AppDataContext'; // 👈 Importa el Provider
 import '../css/app.css';
 import { initializeTheme } from '@/hooks/use-appearance';
 
@@ -21,7 +23,9 @@ createInertiaApp({
         root.render(
             <StrictMode>
                 <TooltipProvider delayDuration={0}>
-                    <App {...props} />
+                    <AppDataProvider>  {/* 👈 Envuelve tu App */}
+                        <App {...props} />
+                    </AppDataProvider>
                 </TooltipProvider>
             </StrictMode>,
         );

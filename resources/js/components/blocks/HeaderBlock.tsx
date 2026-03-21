@@ -1,4 +1,6 @@
+// HeaderBlock.tsx
 import React from 'react';
+import { useAppData } from '@/contexts/AppDataContext';
 
 interface Props {
     values: Record<string, any>;
@@ -6,22 +8,15 @@ interface Props {
     theme?: 'light' | 'dark';
 }
 
-interface MenuItem {
-    id: number | null;
-    label: string;
-    url: string;
-    target: '_self' | '_blank';
-    active: boolean;
-}
-
 const HeaderBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'light' }) => {
-    // Seleccionar valores según el tema
+    const { menuItems: allMenuItems, loadingMenuItems } = useAppData();
+    
     const logo = theme === 'dark' ? values.logo_dark : values.logo_light;
     const bgColor = theme === 'dark' ? values.bg_color_dark : values.bg_color_light;
     const textColor = theme === 'dark' ? values.text_color_dark : values.text_color_light;
     
     const {
-        menu_items = [],
+        menu_items = [], // IDs seleccionados
         header_height = 80
     } = values;
 
@@ -32,11 +27,35 @@ const HeaderBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'ligh
         transition: 'all 0.3s ease'
     };
 
-    // Función para renderizar los items del menú
     const renderMenuItems = () => {
+        if (loadingMenuItems) {
+            return <span className="text-sm">Cargando menú...</span>;
+        }
+
+        // Si hay IDs seleccionados en menu_items
+        if (Array.isArray(menu_items) && menu_items.length > 0 && allMenuItems.length > 0) {
+            const selectedItems = allMenuItems.filter(item => 
+                menu_items.includes(item.id) || menu_items.includes(String(item.id))
+            );
+            
+            if (selectedItems.length > 0) {
+                return selectedItems.map((item, idx) => (
+                    <a 
+                        key={idx} 
+                        href={item.url || '#'} 
+                        target={item.target || '_self'}
+                        className={`hover:opacity-80 transition-opacity ${item.active ? 'font-bold underline' : ''}`}
+                        style={{ color: 'inherit' }}
+                    >
+                        {item.label}
+                    </a>
+                ));
+            }
+        }
         
-        if (Array.isArray(menu_items) && menu_items.length > 0) {
-            return menu_items.map((item: MenuItem, idx: number) => (
+        // Si no hay seleccionados, mostrar todos los disponibles
+        if (allMenuItems.length > 0) {
+            return allMenuItems.map((item, idx) => (
                 <a 
                     key={idx} 
                     href={item.url || '#'} 
@@ -44,12 +63,12 @@ const HeaderBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'ligh
                     className={`hover:opacity-80 transition-opacity ${item.active ? 'font-bold underline' : ''}`}
                     style={{ color: 'inherit' }}
                 >
-                    {item.label || 'Enlace'}
+                    {item.label}
                 </a>
             ));
         }
         
-        // Items por defecto si no hay datos
+        // Fallback: items por defecto
         return (
             <>
                 <a href="/" className="hover:opacity-80">Inicio</a>
@@ -61,26 +80,20 @@ const HeaderBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'ligh
 
     return (
         <header style={headerStyle} className="w-full px-6 relative">
-            {/* Preview */}
             {isPreview && (
-                <div 
-                    className="text-xs opacity-60 bg-black/50 text-white px-2 py-1 rounded absolute bottom-2 left-2 z-50"
-                >
+                <div className="text-xs opacity-60 bg-black/50 text-white px-2 py-1 rounded absolute bottom-2 left-2 z-50">
                     [Header]
                 </div>
             )}
             
-            {/* Contenido */}
-            <div className={`container mx-auto h-full flex items-center justify-between`}>
+            <div className="container mx-auto h-full flex items-center justify-between">
                 <div className="flex items-center">
                     {logo ? (
                         <img 
                             src={logo} 
                             alt="Logo" 
                             className="h-10 w-auto"
-                            style={{ 
-                                filter: theme === 'dark' ? 'brightness(1.2)' : 'none'
-                            }}
+                            style={{ filter: theme === 'dark' ? 'brightness(1.2)' : 'none' }}
                         />
                     ) : (
                         <span className="text-xl font-bold">Logo</span>

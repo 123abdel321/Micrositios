@@ -41,7 +41,7 @@ const HeroBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'light'
         backgroundColor: bgColor || undefined,
         backgroundSize: bg_image_size,
         backgroundPosition: bg_image_position,
-        backgroundRepeat: bg_image_repeat == 1 ? 'repeat' : 'no-repeat',
+        backgroundRepeat: (bg_image_repeat === true || bg_image_repeat === 1 || bg_image_repeat === '1') ? 'repeat' : 'no-repeat',
         color: textColor || undefined,
         minHeight: typeof hero_min_height === 'number' ? `${hero_min_height}px` : `${parseInt(hero_min_height)}px`,
         maxHeight: typeof hero_max_height === 'number' ? `${hero_max_height}px` : `${parseInt(hero_max_height)}px`,

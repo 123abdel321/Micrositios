@@ -101,7 +101,7 @@ const Canvas: React.FC<Props> = ({
     onDeleteBlock,
 }) => {
     return (
-        <div className="h-[calc(100vh-150px)] overflow-y-auto p-2 bg-muted/20">
+        <div className="h-[calc(100vh-140px)] overflow-y-auto p-2 bg-muted/20">
             {blocks.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground border-2 border-dashed rounded-lg p-8">
                     <p className="mb-2 text-lg">No hay bloques</p>

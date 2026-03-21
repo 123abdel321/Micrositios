@@ -1,4 +1,3 @@
-// components/blocks/BlockEditor.tsx
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Block, Module, Component } from '@/types/builder';
 import { Input } from '@/components/ui/input';
@@ -7,6 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
+import { useAppData } from '@/contexts/AppDataContext';
 
 interface Props {
     block: Block;
@@ -14,8 +14,223 @@ interface Props {
     onChange: (fieldName: string, value: any) => void;
 }
 
+// Componente SelectField separado para manejar su propio estado
+// Componente SelectField con caché usando useAppData
+const SelectField: React.FC<{
+    component: Component;
+    value: any;
+    onChange: (value: any) => void;
+}> = ({ component, value, onChange }) => {
+    // Importar useAppData
+    const { getCachedData, setCachedData, isLoading: isGlobalLoading, setIsLoading } = useAppData();
+    
+    const config = component.configuration as any || {};
+    const options = config.options || [];
+    const isMultiple = config.is_multiple || false;
+    const maxSelections = config.max_selections || null;
+    const placeholder = config.placeholder || component.placeholder || "Selecciona una opción";
+    
+    const cacheKey = component.data_source || `static_${component.id}`;
+    
+    // Estado inicial: intentar obtener del caché
+    const [selectOptions, setSelectOptions] = useState<any[]>(() => {
+        const cached = getCachedData(cacheKey);
+        if (cached && cached.length > 0) {
+            return cached;
+        }
+        return options;
+    });
+    
+    const [loadingOptions, setLoadingOptions] = useState(false);
+    const [hasLoaded, setHasLoaded] = useState(() => {
+        // Si ya hay datos en caché, marcar como cargado
+        const cached = getCachedData(cacheKey);
+        return cached && cached.length > 0;
+    });
+    
+    // Cargar opciones desde data_source usando caché
+    useEffect(() => {
+        if (hasLoaded) return;
+        
+        const loadOptions = async () => {
+            if (!component.data_source) {
+                setSelectOptions(options);
+                setHasLoaded(true);
+                return;
+            }
+            
+            // Verificar si ya está cargando globalmente
+            if (isGlobalLoading(cacheKey)) return;
+            
+            // Verificar caché nuevamente
+            const cached = getCachedData(cacheKey);
+            if (cached && cached.length > 0) {
+                setSelectOptions(cached);
+                setHasLoaded(true);
+                return;
+            }
+            
+            setIsLoading(cacheKey, true);
+            setLoadingOptions(true);
+            
+            try {
+                const baseUrl = import.meta.env.VITE_API_URL || '';
+                const url = `${baseUrl}${component.data_source}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                // Guardar en caché
+                setCachedData(cacheKey, data);
+                setSelectOptions(data);
+                setHasLoaded(true);
+            } catch (error) {
+                console.error('Error loading select options:', error);
+                setSelectOptions([]);
+            } finally {
+                setLoadingOptions(false);
+                setIsLoading(cacheKey, false);
+            }
+        };
+        
+        loadOptions();
+    }, [component.data_source, options, hasLoaded, cacheKey, getCachedData, setCachedData, isGlobalLoading, setIsLoading]);
+    
+    const handleSelectChange = (selectedValue: string) => {
+        if (!isMultiple) {
+            onChange(selectedValue);
+        }
+    };
+    
+    const handleMultipleSelectChange = (selectedValue: string) => {
+        const selectedValues: string[] = Array.isArray(value)
+            ? value.map((v) => String(v))
+            : (value !== null && value !== undefined && value !== '')
+                ? [String(value)]
+                : [];
+        
+        let values = Array.from(new Set([...selectedValues, selectedValue]));
+        
+        if (maxSelections && values.length > maxSelections) {
+            values = values.slice(0, maxSelections);
+        }
+        
+        onChange(values);
+    };
+    
+    const handleRemoveValue = (valToRemove: string) => {
+        const selectedValues: string[] = Array.isArray(value)
+            ? value.map((v) => String(v))
+            : (value !== null && value !== undefined && value !== '')
+                ? [String(value)]
+                : [];
+        
+        const newValues = selectedValues.filter(v => v !== valToRemove);
+        onChange(newValues);
+    };
+    
+    const handleClearAll = () => {
+        onChange([]);
+    };
+    
+    if (loadingOptions) {
+        return (
+            <div className="flex items-center gap-2 p-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm text-muted-foreground">Cargando opciones...</span>
+            </div>
+        );
+    }
+    
+    if (selectOptions.length === 0) {
+        return (
+            <div className="text-sm text-muted-foreground p-2 border rounded">
+                No hay opciones disponibles
+            </div>
+        );
+    }
+    
+    // Select múltiple
+    if (isMultiple) {
+        const selectedValues: string[] = Array.isArray(value)
+            ? value.map((v) => String(v))
+            : (value !== null && value !== undefined && value !== '')
+                ? [String(value)]
+                : [];
+        
+        return (
+            <div className="space-y-2">
+                <Select
+                    value=""
+                    onValueChange={handleMultipleSelectChange}
+                >
+                    <SelectTrigger className="w-full">
+                        <SelectValue placeholder={placeholder} />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60 overflow-y-auto">
+                        {selectOptions.map((opt) => (
+                            <SelectItem key={opt.value} value={String(opt.value)}>
+                                {opt.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                
+                {selectedValues.length > 0 && config.allow_clear !== false && (
+                    <button
+                        onClick={handleClearAll}
+                        className="text-xs text-muted-foreground hover:text-red-500 transition-colors"
+                    >
+                        Limpiar selección
+                    </button>
+                )}
+                
+                {selectedValues.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                        {selectedValues.map((val: string) => {
+                            const opt = selectOptions.find(o => String(o.value) === val);
+                            return (
+                                <span 
+                                    key={val} 
+                                    className="bg-muted px-2 py-0.5 rounded text-xs flex items-center gap-1"
+                                >
+                                    {opt?.label || val}
+                                    <button
+                                        onClick={() => handleRemoveValue(val)}
+                                        className="hover:text-red-500 ml-1"
+                                    >
+                                        ×
+                                    </button>
+                                </span>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+        );
+    }
+    
+    // Select simple
+    return (
+        <Select
+            value={value ? String(value) : ""}
+            onValueChange={handleSelectChange}
+        >
+            <SelectTrigger className="w-full">
+                <SelectValue placeholder={placeholder} />
+            </SelectTrigger>
+            <SelectContent className="max-h-60 overflow-y-auto">
+                {selectOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={String(opt.value)}>
+                        {opt.label}
+                    </SelectItem>
+                ))}
+            </SelectContent>
+        </Select>
+    );
+};
+
 const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
-    // Memoizar los componentes ordenados para evitar recreaciones
+    // Memoizar los componentes ordenados
     const sortedComponents = React.useMemo(
         () => [...module.components].sort((a, b) => a.order - b.order),
         [module.components]
@@ -23,25 +238,19 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
     
     const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
     const [errorStates, setErrorStates] = useState<Record<string, string>>({});
-    const fetchedRef = useRef<Set<string>>(new Set()); // Para trackear qué ya se cargó
+    const fetchedRef = useRef<Set<string>>(new Set());
 
     const toInputValue = (v: unknown): string | number => {
         if (typeof v === 'string' || typeof v === 'number') return v;
         return '';
     };
 
-    // Función para cargar datos externos con useCallback
     const fetchExternalData = useCallback(async (component: Component) => {
-
         if (!component.data_source) return;
 
-        // Si ya se cargó antes, no cargar de nuevo
         const fetchKey = `${component.id}-${component.name}`;
-        if (fetchedRef.current.has(fetchKey)) {
-            return;
-        }
+        if (fetchedRef.current.has(fetchKey)) return;
 
-        // Si ya tiene valor, marcar como cargado y no recargar
         const currentValue = block.values[component.name];
         if (currentValue && (Array.isArray(currentValue) && currentValue.length > 0) || 
             (typeof currentValue === 'object' && currentValue !== null && Object.keys(currentValue).length > 0)) {
@@ -63,11 +272,7 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
             }
             
             const data = await response.json();
-            
-            // Marcar como cargado antes de actualizar
             fetchedRef.current.add(fetchKey);
-            
-            // Actualizar el valor en el bloque
             onChange(component.name, data);
             
         } catch (error) {
@@ -80,9 +285,7 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
         }
     }, [block.values, onChange]);
 
-    // Cargar datos externos UNA SOLA VEZ cuando el componente se monta
     useEffect(() => {
-        // Usar un flag para evitar ejecuciones múltiples
         let isMounted = true;
         
         const loadExternalData = async () => {
@@ -98,7 +301,7 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
         return () => {
             isMounted = false;
         };
-    }, [sortedComponents, fetchExternalData]); // Solo dependencias estables
+    }, [sortedComponents, fetchExternalData]);
 
     const renderField = (component: Component) => {
         const value = block.values[component.name] ?? '';
@@ -141,29 +344,11 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
 
             case 'select':
                 return (
-                    <Select
-                        value={value ? String(value) : ""}
-                        onValueChange={(val) => onChange(component.name, val)}
-                    >
-                        <SelectTrigger id={component.name} className="w-full">
-                            <SelectValue placeholder="Selecciona una opción" />
-                        </SelectTrigger>
-
-                        <SelectContent
-                            position="popper"
-                            className="z-[9999] max-h-60 overflow-y-auto"
-                        >
-                            {Array.isArray(component.options) &&
-                                component.options.map((opt) => (
-                                    <SelectItem
-                                        key={opt.id}
-                                        value={String(opt.value)}
-                                    >
-                                        {opt.label}
-                                    </SelectItem>
-                                ))}
-                        </SelectContent>
-                    </Select>
+                    <SelectField
+                        component={component}
+                        value={value}
+                        onChange={(newValue) => onChange(component.name, newValue)}
+                    />
                 );
 
             case 'toggle':
@@ -212,7 +397,6 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
                                 <p className="text-xs">{error}</p>
                                 <button 
                                     onClick={() => {
-                                        // Limpiar el flag para permitir reintentar
                                         const fetchKey = `${component.id}-${component.name}`;
                                         fetchedRef.current.delete(fetchKey);
                                         fetchExternalData(component);
@@ -230,7 +414,6 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
                                     </span>
                                     <button 
                                         onClick={() => {
-                                            // Limpiar el flag para permitir recargar
                                             const fetchKey = `${component.id}-${component.name}`;
                                             fetchedRef.current.delete(fetchKey);
                                             fetchExternalData(component);
@@ -295,7 +478,7 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
 
     return (
         <div>
-            <CardContent className="h-[calc(100vh-270px)] overflow-y-auto space-y-4 custom-scrollbar">
+            <CardContent className="h-[calc(100vh-240px)] overflow-y-auto space-y-4 custom-scrollbar">
                 {sortedComponents.map((comp) => (
                     <div key={comp.id} className="space-y-1">
                         <Label htmlFor={comp.name}>
