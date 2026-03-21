@@ -34,7 +34,7 @@ export default function Edit({ modules, landing }: Props) {
                 onSuccess: () => {
                     toast.success('Landing guardada correctamente');
                 },
-                onError: (errors) => {
+                onError: () => {
                     toast.error('Error al guardar');
                 },
                 onFinish: () => setIsSaving(false),

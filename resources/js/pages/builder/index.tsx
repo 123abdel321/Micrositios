@@ -6,7 +6,6 @@ import { route } from 'ziggy-js';
 import {
     Card,
     CardContent,
-    CardDescription,
     CardFooter,
     CardHeader,
     CardTitle,

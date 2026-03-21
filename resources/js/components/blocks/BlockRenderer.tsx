@@ -13,22 +13,9 @@ interface Props {
 
 const BlockRenderer: React.FC<Props> = ({ block, isPreview = false }) => {
     const { appearance } = useAppearance(); // 'light' | 'dark' | 'system'
-    const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>('light');
-
-    useEffect(() => {
-        if (appearance === 'system') {
-            const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-            const handleChange = (e: MediaQueryListEvent) => {
-                setEffectiveTheme(e.matches ? 'dark' : 'light');
-            };
-            // Establecer valor inicial
-            setEffectiveTheme(mediaQuery.matches ? 'dark' : 'light');
-            mediaQuery.addEventListener('change', handleChange);
-            return () => mediaQuery.removeEventListener('change', handleChange);
-        } else {
-            setEffectiveTheme(appearance);
-        }
-    }, [appearance]);
+    const effectiveTheme: 'light' | 'dark' = appearance === 'system'
+        ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+        : appearance;
 
     // Pasamos effectiveTheme a los bloques que lo necesiten
     switch (block.module_slug) {

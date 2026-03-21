@@ -7,11 +7,6 @@ interface Props {
 }
 
 const HeroBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'light' }) => {
-    const [mounted, setMounted] = useState(false);
-    
-    useEffect(() => {
-        setMounted(true);
-    }, []);
 
     // Valores según tema
     const bgColor = theme === 'dark' ? values.bg_color_dark : values.bg_color_light;
@@ -76,8 +71,6 @@ const HeroBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'light'
                 return 'text-center items-center';
         }
     };
-
-    if (!mounted) return null;
 
     return (
         <section style={heroStyle} className="relative overflow-hidden">

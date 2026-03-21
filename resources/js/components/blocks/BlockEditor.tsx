@@ -25,7 +25,7 @@ const SelectField: React.FC<{
     const { getCachedData, setCachedData, isLoading: isGlobalLoading, setIsLoading } = useAppData();
     
     const config = component.configuration as any || {};
-    const options = config.options || [];
+    const options = React.useMemo(() => config.options || [], [config.options]);
     const isMultiple = config.is_multiple || false;
     const maxSelections = config.max_selections || null;
     const placeholder = config.placeholder || component.placeholder || "Selecciona una opción";

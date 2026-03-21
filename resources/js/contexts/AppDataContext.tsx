@@ -60,7 +60,7 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     useEffect(() => {
         fetchMenuItems();
-    }, []);
+    }, [fetchMenuItems]);
 
     const refreshMenuItems = async () => {
         setLoaded(false);
