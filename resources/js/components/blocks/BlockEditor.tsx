@@ -27,7 +27,6 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
 
     const renderField = (component: Component) => {
         const value = block.values[component.name] ?? '';
-
         switch (component.type) {
             case 'text':
             case 'number':
@@ -109,7 +108,7 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
                             id={component.name}
                             value={toInputValue(value)}
                             onChange={(e) => onChange(component.name, e.target.value)}
-                            placeholder="https://ejemplo.com/imagen.jpg"
+                            placeholder={component.placeholder || "https://example.com/image.jpg"}
                         />
                         {typeof value === 'string' && value && (
                             <img

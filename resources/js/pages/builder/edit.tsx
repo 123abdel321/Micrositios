@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import type { Module, Landing } from '@/types/builder';
 import type { BreadcrumbItem } from '@/types';
+import AppearanceTabs from '@/components/appearance-tabs';
 
 interface Props {
     modules: Module[];
@@ -36,7 +37,6 @@ export default function Edit({ modules, landing }: Props) {
                 },
                 onError: (errors) => {
                     toast.error('Error al guardar');
-                    console.error(errors);
                 },
                 onFinish: () => setIsSaving(false),
             }
@@ -49,6 +49,7 @@ export default function Edit({ modules, landing }: Props) {
             <div className="flex flex-col h-full">
                 <div className="border-b p-4 flex justify-between items-center">
                     <h1 className="text-2xl font-bold">{landing.name}</h1>
+                    <AppearanceTabs />
                     <Button onClick={handleSave} disabled={isSaving}>
                         {isSaving ? 'Guardando...' : 'Guardar cambios'}
                     </Button>

@@ -17,11 +17,13 @@ return new class extends Migration
             $table->string('label');
             $table->string('name'); // nombre para el input HTML
             $table->enum('type', ['text', 'number', 'select', 'color', 'image', 'range', 'toggle', 'external'])->default('text');
+            $table->enum('color_mode', ['light', 'dark', 'both'])->default('both'); // NUEVO CAMPO
             $table->string('placeholder')->nullable();
             $table->boolean('is_required')->default(false);
             $table->integer('order')->default(0);
             $table->json('validation_rules')->nullable(); // ej: ["required", "image", "max:2048"]
             $table->string('data_source')->nullable(); // URL del endpoint para tipos 'external'
+            $table->json('configuration')->nullable(); // NUEVO CAMPO - para configuración de range, select, etc.
             $table->timestamps();
         });
     }

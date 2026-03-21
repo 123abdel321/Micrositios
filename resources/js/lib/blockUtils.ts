@@ -14,6 +14,8 @@ export function getDefaultValuesForModule(module: Module): Record<string, any> {
             values[comp.name] = comp.options[0].value; // primer opción por defecto
         } else if (comp.type === 'external') {
             values[comp.name] = null; // se cargará después
+        } else if (comp.type === 'image') {
+            values[comp.name] = ''; // URL de la imagen
         } else {
             values[comp.name] = comp.placeholder || '';
         }

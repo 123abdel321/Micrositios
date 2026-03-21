@@ -12,7 +12,7 @@ class ModuleSeeder extends Seeder
     public function run(): void
     {
         // ============================================
-        // MÓDULO HEADER PROFESIONAL
+        // MÓDULO HEADER (module_id = 5)
         // ============================================
         $header = Module::create([
             'name' => 'Header',
@@ -20,9 +20,7 @@ class ModuleSeeder extends Seeder
             'slug' => 'header',
         ]);
 
-        // Header components
-        $headerComponents = [
-            // Logos por modo
+        Component::insert([
             [
                 'module_id' => $header->id,
                 'label' => 'Logo (modo claro)',
@@ -34,7 +32,7 @@ class ModuleSeeder extends Seeder
                 'order' => 1,
                 'validation_rules' => json_encode(['required', 'image', 'max:2048']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -49,24 +47,22 @@ class ModuleSeeder extends Seeder
                 'order' => 2,
                 'validation_rules' => json_encode(['nullable', 'image', 'max:2048']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            
-            // Colores de fondo por modo
             [
                 'module_id' => $header->id,
                 'label' => 'Color de fondo (modo claro)',
                 'name' => 'bg_color_light',
                 'type' => 'color',
                 'color_mode' => 'light',
-                'placeholder' => '#ffffff',
+                'placeholder' => '#f5f5f5',
                 'is_required' => true,
                 'order' => 3,
                 'validation_rules' => json_encode(['required', 'string']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -81,12 +77,10 @@ class ModuleSeeder extends Seeder
                 'order' => 4,
                 'validation_rules' => json_encode(['required', 'string']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            
-            // Colores de texto por modo
             [
                 'module_id' => $header->id,
                 'label' => 'Color del texto (modo claro)',
@@ -98,7 +92,7 @@ class ModuleSeeder extends Seeder
                 'order' => 5,
                 'validation_rules' => json_encode(['required', 'string']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -113,12 +107,10 @@ class ModuleSeeder extends Seeder
                 'order' => 6,
                 'validation_rules' => json_encode(['required', 'string']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            
-            // Menú y configuración
             [
                 'module_id' => $header->id,
                 'label' => 'Elementos del menú',
@@ -129,8 +121,8 @@ class ModuleSeeder extends Seeder
                 'is_required' => false,
                 'order' => 7,
                 'validation_rules' => json_encode(['nullable', 'array']),
-                'data_source' => env('ERP_API_URL') . '/menu-items',
-                'options' => null,
+                'data_source' => '/menu-items',
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -145,64 +137,17 @@ class ModuleSeeder extends Seeder
                 'order' => 8,
                 'validation_rules' => json_encode(['nullable', 'numeric']),
                 'data_source' => null,
-                'options' => json_encode(['min' => 40, 'max' => 200, 'step' => 1, 'unit' => 'px']),
+                'configuration' => json_encode(['min' => 40, 'max' => 200, 'step' => 1, 'unit' => 'px']),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            [
-                'module_id' => $header->id,
-                'label' => 'Posición del logo',
-                'name' => 'logo_position',
-                'type' => 'select',
-                'color_mode' => 'both',
-                'placeholder' => 'left',
-                'is_required' => false,
-                'order' => 9,
-                'validation_rules' => json_encode(['nullable', 'string']),
-                'data_source' => null,
-                'options' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ];
+        ]);
 
-        Component::insert($headerComponents);
-
-        // Opciones para posición del logo
-        $logoPositionComp = Component::where('module_id', $header->id)
-            ->where('name', 'logo_position')
-            ->first();
-        if ($logoPositionComp) {
-            ComponentOption::insert([
-                [
-                    'component_id' => $logoPositionComp->id,
-                    'label' => 'Izquierda',
-                    'value' => 'left',
-                    'order' => 1,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ],
-                [
-                    'component_id' => $logoPositionComp->id,
-                    'label' => 'Centro',
-                    'value' => 'center',
-                    'order' => 2,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ],
-                [
-                    'component_id' => $logoPositionComp->id,
-                    'label' => 'Derecha',
-                    'value' => 'right',
-                    'order' => 3,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ],
-            ]);
-        }
+        // Opciones para selects del Header (si las hay)
+        // Header no tiene selects en estos datos
 
         // ============================================
-        // MÓDULO HERO PROFESIONAL
+        // MÓDULO HERO (module_id = 6)
         // ============================================
         $hero = Module::create([
             'name' => 'Hero',
@@ -210,8 +155,7 @@ class ModuleSeeder extends Seeder
             'slug' => 'hero',
         ]);
 
-        $heroComponents = [
-            // Contenido básico
+        Component::insert([
             [
                 'module_id' => $hero->id,
                 'label' => 'Título principal',
@@ -223,7 +167,7 @@ class ModuleSeeder extends Seeder
                 'order' => 1,
                 'validation_rules' => json_encode(['required', 'string', 'max:100']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -238,12 +182,10 @@ class ModuleSeeder extends Seeder
                 'order' => 2,
                 'validation_rules' => json_encode(['nullable', 'string', 'max:200']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            
-            // Imagen de fondo
             [
                 'module_id' => $hero->id,
                 'label' => 'Imagen de fondo',
@@ -255,12 +197,10 @@ class ModuleSeeder extends Seeder
                 'order' => 3,
                 'validation_rules' => json_encode(['required', 'image', 'max:5120']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            
-            // Control de imagen
             [
                 'module_id' => $hero->id,
                 'label' => 'Tamaño de la imagen',
@@ -272,7 +212,7 @@ class ModuleSeeder extends Seeder
                 'order' => 4,
                 'validation_rules' => json_encode(['nullable', 'string']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -287,7 +227,7 @@ class ModuleSeeder extends Seeder
                 'order' => 5,
                 'validation_rules' => json_encode(['nullable', 'string']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -302,12 +242,10 @@ class ModuleSeeder extends Seeder
                 'order' => 6,
                 'validation_rules' => json_encode(['nullable', 'boolean']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            
-            // Dimensiones
             [
                 'module_id' => $hero->id,
                 'label' => 'Altura mínima',
@@ -319,7 +257,7 @@ class ModuleSeeder extends Seeder
                 'order' => 7,
                 'validation_rules' => json_encode(['nullable', 'numeric']),
                 'data_source' => null,
-                'options' => json_encode(['min' => 200, 'max' => 800, 'step' => 10, 'unit' => 'px']),
+                'configuration' => json_encode(['min' => 200, 'max' => 800, 'step' => 10, 'unit' => 'px']),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -334,91 +272,10 @@ class ModuleSeeder extends Seeder
                 'order' => 8,
                 'validation_rules' => json_encode(['nullable', 'numeric']),
                 'data_source' => null,
-                'options' => json_encode(['min' => 400, 'max' => 1200, 'step' => 10, 'unit' => 'px']),
+                'configuration' => json_encode(['min' => 400, 'max' => 1200, 'step' => 10, 'unit' => 'px']),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            
-            // Efectos
-            [
-                'module_id' => $hero->id,
-                'label' => 'Parallax',
-                'name' => 'enable_parallax',
-                'type' => 'toggle',
-                'color_mode' => 'both',
-                'placeholder' => null,
-                'is_required' => false,
-                'order' => 9,
-                'validation_rules' => json_encode(['nullable', 'boolean']),
-                'data_source' => null,
-                'options' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'module_id' => $hero->id,
-                'label' => 'Velocidad parallax',
-                'name' => 'parallax_speed',
-                'type' => 'range',
-                'color_mode' => 'both',
-                'placeholder' => '0.5',
-                'is_required' => false,
-                'order' => 10,
-                'validation_rules' => json_encode(['nullable', 'numeric']),
-                'data_source' => null,
-                'options' => json_encode(['min' => 0.1, 'max' => 1, 'step' => 0.1, 'unit' => '']),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            
-            // Overlay
-            [
-                'module_id' => $hero->id,
-                'label' => 'Activar overlay',
-                'name' => 'enable_overlay',
-                'type' => 'toggle',
-                'color_mode' => 'both',
-                'placeholder' => null,
-                'is_required' => false,
-                'order' => 11,
-                'validation_rules' => json_encode(['nullable', 'boolean']),
-                'data_source' => null,
-                'options' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'module_id' => $hero->id,
-                'label' => 'Color del overlay',
-                'name' => 'overlay_color',
-                'type' => 'color',
-                'color_mode' => 'both',
-                'placeholder' => '#000000',
-                'is_required' => false,
-                'order' => 12,
-                'validation_rules' => json_encode(['nullable', 'string']),
-                'data_source' => null,
-                'options' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'module_id' => $hero->id,
-                'label' => 'Opacidad del overlay',
-                'name' => 'overlay_opacity',
-                'type' => 'range',
-                'color_mode' => 'both',
-                'placeholder' => '0.5',
-                'is_required' => false,
-                'order' => 13,
-                'validation_rules' => json_encode(['nullable', 'numeric']),
-                'data_source' => null,
-                'options' => json_encode(['min' => 0, 'max' => 1, 'step' => 0.1, 'unit' => '']),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            
-            // Colores por modo
             [
                 'module_id' => $hero->id,
                 'label' => 'Color de fondo (modo claro)',
@@ -430,7 +287,7 @@ class ModuleSeeder extends Seeder
                 'order' => 14,
                 'validation_rules' => json_encode(['nullable', 'string']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -445,7 +302,7 @@ class ModuleSeeder extends Seeder
                 'order' => 15,
                 'validation_rules' => json_encode(['nullable', 'string']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -460,7 +317,7 @@ class ModuleSeeder extends Seeder
                 'order' => 16,
                 'validation_rules' => json_encode(['nullable', 'string']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -475,12 +332,10 @@ class ModuleSeeder extends Seeder
                 'order' => 17,
                 'validation_rules' => json_encode(['nullable', 'string']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            
-            // Botón
             [
                 'module_id' => $hero->id,
                 'label' => 'Texto del botón',
@@ -492,7 +347,7 @@ class ModuleSeeder extends Seeder
                 'order' => 18,
                 'validation_rules' => json_encode(['nullable', 'string', 'max:50']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -507,7 +362,7 @@ class ModuleSeeder extends Seeder
                 'order' => 19,
                 'validation_rules' => json_encode(['nullable', 'url']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -522,12 +377,10 @@ class ModuleSeeder extends Seeder
                 'order' => 20,
                 'validation_rules' => json_encode(['nullable', 'string']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            
-            // Layout
             [
                 'module_id' => $hero->id,
                 'label' => 'Alineación del contenido',
@@ -539,7 +392,7 @@ class ModuleSeeder extends Seeder
                 'order' => 21,
                 'validation_rules' => json_encode(['nullable', 'string']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -554,7 +407,7 @@ class ModuleSeeder extends Seeder
                 'order' => 22,
                 'validation_rules' => json_encode(['nullable', 'numeric']),
                 'data_source' => null,
-                'options' => json_encode(['min' => 0, 'max' => 200, 'step' => 5, 'unit' => 'px']),
+                'configuration' => json_encode(['min' => 0, 'max' => 200, 'step' => 5, 'unit' => 'px']),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -569,13 +422,41 @@ class ModuleSeeder extends Seeder
                 'order' => 23,
                 'validation_rules' => json_encode(['nullable', 'numeric']),
                 'data_source' => null,
-                'options' => json_encode(['min' => 0, 'max' => 200, 'step' => 5, 'unit' => 'px']),
+                'configuration' => json_encode(['min' => 0, 'max' => 200, 'step' => 5, 'unit' => 'px']),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-        ];
-
-        Component::insert($heroComponents);
+            [
+                'module_id' => $hero->id,
+                'label' => 'Padding derecha',
+                'name' => 'padding_right',
+                'type' => 'range',
+                'color_mode' => 'both',
+                'placeholder' => '20',
+                'is_required' => false,
+                'order' => 24,
+                'validation_rules' => json_encode(['nullable', 'numeric']),
+                'data_source' => null,
+                'configuration' => json_encode(['min' => 0, 'max' => 200, 'step' => 5, 'unit' => 'px']),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'module_id' => $hero->id,
+                'label' => 'Padding izquierda',
+                'name' => 'padding_left',
+                'type' => 'range',
+                'color_mode' => 'both',
+                'placeholder' => '20',
+                'is_required' => false,
+                'order' => 25,
+                'validation_rules' => json_encode(['nullable', 'numeric']),
+                'data_source' => null,
+                'configuration' => json_encode(['min' => 0, 'max' => 200, 'step' => 5, 'unit' => 'px']),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
 
         // Opciones para selects del Hero
         $heroSelects = [
@@ -614,7 +495,7 @@ class ModuleSeeder extends Seeder
                 ->first();
             
             if ($component) {
-                foreach ($options as $index => $option) {
+                foreach ($options as $option) {
                     ComponentOption::insert([
                         'component_id' => $component->id,
                         'label' => $option[0],
@@ -628,7 +509,7 @@ class ModuleSeeder extends Seeder
         }
 
         // ============================================
-        // MÓDULO FOOTER PROFESIONAL
+        // MÓDULO FOOTER (module_id = 7)
         // ============================================
         $footer = Module::create([
             'name' => 'Footer',
@@ -636,8 +517,7 @@ class ModuleSeeder extends Seeder
             'slug' => 'footer',
         ]);
 
-        $footerComponents = [
-            // Copyright
+        Component::insert([
             [
                 'module_id' => $footer->id,
                 'label' => 'Texto de copyright',
@@ -649,12 +529,10 @@ class ModuleSeeder extends Seeder
                 'order' => 1,
                 'validation_rules' => json_encode(['required', 'string']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            
-            // Colores por modo
             [
                 'module_id' => $footer->id,
                 'label' => 'Color de fondo (modo claro)',
@@ -666,7 +544,7 @@ class ModuleSeeder extends Seeder
                 'order' => 2,
                 'validation_rules' => json_encode(['required', 'string']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -681,7 +559,7 @@ class ModuleSeeder extends Seeder
                 'order' => 3,
                 'validation_rules' => json_encode(['required', 'string']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -696,7 +574,7 @@ class ModuleSeeder extends Seeder
                 'order' => 4,
                 'validation_rules' => json_encode(['required', 'string']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -711,12 +589,10 @@ class ModuleSeeder extends Seeder
                 'order' => 5,
                 'validation_rules' => json_encode(['required', 'string']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            
-            // Configuración de columnas
             [
                 'module_id' => $footer->id,
                 'label' => 'Número de columnas',
@@ -728,7 +604,7 @@ class ModuleSeeder extends Seeder
                 'order' => 6,
                 'validation_rules' => json_encode(['required', 'numeric', 'min:1', 'max:6']),
                 'data_source' => null,
-                'options' => json_encode(['min' => 1, 'max' => 6, 'step' => 1, 'unit' => 'col']),
+                'configuration' => json_encode(['min' => 1, 'max' => 6, 'step' => 1, 'unit' => 'col']),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -742,13 +618,11 @@ class ModuleSeeder extends Seeder
                 'is_required' => true,
                 'order' => 7,
                 'validation_rules' => json_encode(['required', 'array']),
-                'data_source' => env('ERP_API_URL') . '/footer-columns',
-                'options' => null,
+                'data_source' => '/footer-columns',
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            
-            // Redes sociales
             [
                 'module_id' => $footer->id,
                 'label' => 'Redes sociales',
@@ -759,8 +633,8 @@ class ModuleSeeder extends Seeder
                 'is_required' => false,
                 'order' => 8,
                 'validation_rules' => json_encode(['nullable', 'array']),
-                'data_source' => env('ERP_API_URL') . '/social-networks',
-                'options' => null,
+                'data_source' => '/social-networks',
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -775,7 +649,7 @@ class ModuleSeeder extends Seeder
                 'order' => 9,
                 'validation_rules' => json_encode(['nullable', 'boolean']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -790,12 +664,10 @@ class ModuleSeeder extends Seeder
                 'order' => 10,
                 'validation_rules' => json_encode(['nullable', 'string']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            
-            // Espaciado
             [
                 'module_id' => $footer->id,
                 'label' => 'Padding superior',
@@ -807,7 +679,7 @@ class ModuleSeeder extends Seeder
                 'order' => 11,
                 'validation_rules' => json_encode(['nullable', 'numeric']),
                 'data_source' => null,
-                'options' => json_encode(['min' => 0, 'max' => 200, 'step' => 5, 'unit' => 'px']),
+                'configuration' => json_encode(['min' => 0, 'max' => 200, 'step' => 5, 'unit' => 'px']),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -822,12 +694,10 @@ class ModuleSeeder extends Seeder
                 'order' => 12,
                 'validation_rules' => json_encode(['nullable', 'numeric']),
                 'data_source' => null,
-                'options' => json_encode(['min' => 0, 'max' => 200, 'step' => 5, 'unit' => 'px']),
+                'configuration' => json_encode(['min' => 0, 'max' => 200, 'step' => 5, 'unit' => 'px']),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            
-            // Borde
             [
                 'module_id' => $footer->id,
                 'label' => 'Mostrar borde superior',
@@ -839,7 +709,7 @@ class ModuleSeeder extends Seeder
                 'order' => 13,
                 'validation_rules' => json_encode(['nullable', 'boolean']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -854,12 +724,10 @@ class ModuleSeeder extends Seeder
                 'order' => 14,
                 'validation_rules' => json_encode(['nullable', 'string']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            
-            // Ancho
             [
                 'module_id' => $footer->id,
                 'label' => 'Ancho del footer',
@@ -871,77 +739,43 @@ class ModuleSeeder extends Seeder
                 'order' => 15,
                 'validation_rules' => json_encode(['nullable', 'string']),
                 'data_source' => null,
-                'options' => null,
+                'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-        ];
-
-        Component::insert($footerComponents);
+        ]);
 
         // Opciones para selects del Footer
-        $socialPositionComp = Component::where('module_id', $footer->id)
-            ->where('name', 'social_position')
-            ->first();
-        if ($socialPositionComp) {
-            ComponentOption::insert([
-                [
-                    'component_id' => $socialPositionComp->id,
-                    'label' => 'Superior',
-                    'value' => 'top',
-                    'order' => 1,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ],
-                [
-                    'component_id' => $socialPositionComp->id,
-                    'label' => 'Inferior',
-                    'value' => 'bottom',
-                    'order' => 2,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ],
-                [
-                    'component_id' => $socialPositionComp->id,
-                    'label' => 'En cada columna',
-                    'value' => 'per_column',
-                    'order' => 3,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ],
-            ]);
-        }
+        $footerSelects = [
+            'social_position' => [
+                ['Superior', 'top', 1],
+                ['Inferior', 'bottom', 2],
+                ['En cada columna', 'per_column', 3],
+            ],
+            'footer_width' => [
+                ['Contenedor', 'container', 1],
+                ['Ancho completo', 'full', 2],
+                ['Contenedor fluido', 'container-fluid', 3],
+            ],
+        ];
 
-        $footerWidthComp = Component::where('module_id', $footer->id)
-            ->where('name', 'footer_width')
-            ->first();
-        if ($footerWidthComp) {
-            ComponentOption::insert([
-                [
-                    'component_id' => $footerWidthComp->id,
-                    'label' => 'Contenedor',
-                    'value' => 'container',
-                    'order' => 1,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ],
-                [
-                    'component_id' => $footerWidthComp->id,
-                    'label' => 'Ancho completo',
-                    'value' => 'full',
-                    'order' => 2,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ],
-                [
-                    'component_id' => $footerWidthComp->id,
-                    'label' => 'Contenedor fluido',
-                    'value' => 'container-fluid',
-                    'order' => 3,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ],
-            ]);
+        foreach ($footerSelects as $name => $options) {
+            $component = Component::where('module_id', $footer->id)
+                ->where('name', $name)
+                ->first();
+            
+            if ($component) {
+                foreach ($options as $option) {
+                    ComponentOption::insert([
+                        'component_id' => $component->id,
+                        'label' => $option[0],
+                        'value' => $option[1],
+                        'order' => $option[2],
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
         }
     }
 }
