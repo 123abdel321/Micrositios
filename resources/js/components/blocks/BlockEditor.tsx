@@ -1,32 +1,110 @@
 // components/blocks/BlockEditor.tsx
-import React from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Block, Module, Component } from '@/types/builder';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CardContent } from '@/components/ui/card';
+import { Loader2 } from 'lucide-react';
 
 interface Props {
     block: Block;
-    module: Module; // el módulo completo con sus componentes
+    module: Module;
     onChange: (fieldName: string, value: any) => void;
 }
 
 const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
-    const sortedComponents = [...module.components].sort((a, b) => a.order - b.order);
+    // Memoizar los componentes ordenados para evitar recreaciones
+    const sortedComponents = React.useMemo(
+        () => [...module.components].sort((a, b) => a.order - b.order),
+        [module.components]
+    );
+    
+    const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
+    const [errorStates, setErrorStates] = useState<Record<string, string>>({});
+    const fetchedRef = useRef<Set<string>>(new Set()); // Para trackear qué ya se cargó
 
     const toInputValue = (v: unknown): string | number => {
         if (typeof v === 'string' || typeof v === 'number') return v;
         return '';
     };
 
-    const toSelectValue = (v: unknown): string | undefined => {
-        return typeof v === 'string' ? v : undefined;
-    };
+    // Función para cargar datos externos con useCallback
+    const fetchExternalData = useCallback(async (component: Component) => {
+
+        if (!component.data_source) return;
+
+        // Si ya se cargó antes, no cargar de nuevo
+        const fetchKey = `${component.id}-${component.name}`;
+        if (fetchedRef.current.has(fetchKey)) {
+            return;
+        }
+
+        // Si ya tiene valor, marcar como cargado y no recargar
+        const currentValue = block.values[component.name];
+        if (currentValue && (Array.isArray(currentValue) && currentValue.length > 0) || 
+            (typeof currentValue === 'object' && currentValue !== null && Object.keys(currentValue).length > 0)) {
+            fetchedRef.current.add(fetchKey);
+            return;
+        }
+
+        setLoadingStates(prev => ({ ...prev, [component.name]: true }));
+        setErrorStates(prev => ({ ...prev, [component.name]: '' }));
+
+        try {
+            const baseUrl = import.meta.env.VITE_API_URL || '';
+            const url = `${baseUrl}${component.data_source}`;
+            
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                throw new Error(`Error ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            
+            // Marcar como cargado antes de actualizar
+            fetchedRef.current.add(fetchKey);
+            
+            // Actualizar el valor en el bloque
+            onChange(component.name, data);
+            
+        } catch (error) {
+            setErrorStates(prev => ({ 
+                ...prev, 
+                [component.name]: error instanceof Error ? error.message : 'Error al cargar datos' 
+            }));
+        } finally {
+            setLoadingStates(prev => ({ ...prev, [component.name]: false }));
+        }
+    }, [block.values, onChange]);
+
+    // Cargar datos externos UNA SOLA VEZ cuando el componente se monta
+    useEffect(() => {
+        // Usar un flag para evitar ejecuciones múltiples
+        let isMounted = true;
+        
+        const loadExternalData = async () => {
+            for (const component of sortedComponents) {
+                if (component.type === 'external' && component.data_source && isMounted) {
+                    await fetchExternalData(component);
+                }
+            }
+        };
+        
+        loadExternalData();
+        
+        return () => {
+            isMounted = false;
+        };
+    }, [sortedComponents, fetchExternalData]); // Solo dependencias estables
 
     const renderField = (component: Component) => {
         const value = block.values[component.name] ?? '';
+        const isLoading = loadingStates[component.name];
+        const error = errorStates[component.name];
+
         switch (component.type) {
             case 'text':
             case 'number':
@@ -72,9 +150,9 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
                         </SelectTrigger>
 
                         <SelectContent
-                                position="popper"
-                                className="z-[9999] max-h-60 overflow-y-auto"
-                            >
+                            position="popper"
+                            className="z-[9999] max-h-60 overflow-y-auto"
+                        >
                             {Array.isArray(component.options) &&
                                 component.options.map((opt) => (
                                     <SelectItem
@@ -122,17 +200,72 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
 
             case 'external':
                 return (
-                    <div className="text-sm text-muted-foreground border p-2 rounded bg-muted/50">
-                        Datos cargados desde fuente externa: {component.data_source}
-                        {value && <pre className="mt-1 text-xs">{JSON.stringify(value, null, 2)}</pre>}
+                    <div className="text-sm border rounded bg-muted/50">
+                        {isLoading ? (
+                            <div className="flex items-center justify-center p-4">
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                <span>Cargando datos...</span>
+                            </div>
+                        ) : error ? (
+                            <div className="p-4 text-red-500">
+                                <p className="font-semibold">Error al cargar datos</p>
+                                <p className="text-xs">{error}</p>
+                                <button 
+                                    onClick={() => {
+                                        // Limpiar el flag para permitir reintentar
+                                        const fetchKey = `${component.id}-${component.name}`;
+                                        fetchedRef.current.delete(fetchKey);
+                                        fetchExternalData(component);
+                                    }}
+                                    className="mt-2 text-xs underline hover:no-underline"
+                                >
+                                    Reintentar
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="p-3">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-muted-foreground text-xs">
+                                        Fuente: {component.data_source}
+                                    </span>
+                                    <button 
+                                        onClick={() => {
+                                            // Limpiar el flag para permitir recargar
+                                            const fetchKey = `${component.id}-${component.name}`;
+                                            fetchedRef.current.delete(fetchKey);
+                                            fetchExternalData(component);
+                                        }}
+                                        className="text-xs text-primary hover:underline"
+                                    >
+                                        Actualizar
+                                    </button>
+                                </div>
+                                {value && Array.isArray(value) && value.length > 0 ? (
+                                    <div className="space-y-2">
+                                        <p className="text-xs font-medium">
+                                            {value.length} elemento(s) cargado(s)
+                                        </p>
+                                        <pre className="text-xs overflow-auto max-h-40 p-2 bg-muted rounded">
+                                            {JSON.stringify(value, null, 2)}
+                                        </pre>
+                                    </div>
+                                ) : value && typeof value === 'object' ? (
+                                    <pre className="text-xs overflow-auto max-h-40 p-2 bg-muted rounded">
+                                        {JSON.stringify(value, null, 2)}
+                                    </pre>
+                                ) : (
+                                    <p className="text-muted-foreground text-xs italic">
+                                        No hay datos cargados. Haz clic en "Actualizar" para cargar.
+                                    </p>
+                                )}
+                            </div>
+                        )}
                     </div>
                 );
 
             case 'range': {
-                const options =
-                    !Array.isArray(component.configuration) && component.configuration
-                        ? component.configuration
-                        : { min: 0, max: 100, step: 1, unit: '' };
+                const options = component.configuration as any || { min: 0, max: 100, step: 1, unit: '' };
+                const config = typeof options === 'string' ? JSON.parse(options) : options;
 
                 return (
                     <div className="space-y-2">
@@ -140,15 +273,15 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
                             <Input
                                 type="range"
                                 id={component.name}
-                                min={options.min}
-                                max={options.max}
-                                step={options.step}
-                                value={Number(value) || 0}
+                                min={config.min}
+                                max={config.max}
+                                step={config.step}
+                                value={Number(value) || config.min}
                                 onChange={(e) => onChange(component.name, Number(e.target.value))}
                                 className="flex-1"
                             />
                             <span className="text-sm font-mono min-w-[60px]">
-                                {value}{options.unit}
+                                {value}{config.unit}
                             </span>
                         </div>
                     </div>

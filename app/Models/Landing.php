@@ -8,7 +8,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Landing extends Model
 {
-    protected $fillable = ['name', 'slug', 'user_id'];
+    protected $fillable = [
+        'user_id',
+        'name',
+        'slug',
+        'is_active',
+        'order'
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
 
     public function user(): BelongsTo
     {

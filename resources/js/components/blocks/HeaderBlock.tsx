@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
 interface Props {
     values: Record<string, any>;
@@ -6,13 +6,15 @@ interface Props {
     theme?: 'light' | 'dark';
 }
 
-const HeaderBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'light' }) => {
-    const [mounted, setMounted] = useState(false);
-    
-    useEffect(() => {
-        setMounted(true);
-    }, []);
+interface MenuItem {
+    id: number | null;
+    label: string;
+    url: string;
+    target: '_self' | '_blank';
+    active: boolean;
+}
 
+const HeaderBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'light' }) => {
     // Seleccionar valores según el tema
     const logo = theme === 'dark' ? values.logo_dark : values.logo_light;
     const bgColor = theme === 'dark' ? values.bg_color_dark : values.bg_color_light;
@@ -30,27 +32,47 @@ const HeaderBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'ligh
         transition: 'all 0.3s ease'
     };
 
-    if (!mounted) return null;
+    // Función para renderizar los items del menú
+    const renderMenuItems = () => {
+        
+        if (Array.isArray(menu_items) && menu_items.length > 0) {
+            return menu_items.map((item: MenuItem, idx: number) => (
+                <a 
+                    key={idx} 
+                    href={item.url || '#'} 
+                    target={item.target || '_self'}
+                    className={`hover:opacity-80 transition-opacity ${item.active ? 'font-bold underline' : ''}`}
+                    style={{ color: 'inherit' }}
+                >
+                    {item.label || 'Enlace'}
+                </a>
+            ));
+        }
+        
+        // Items por defecto si no hay datos
+        return (
+            <>
+                <a href="/" className="hover:opacity-80">Inicio</a>
+                <a href="/sobre-nosotros" className="hover:opacity-80">Acerca</a>
+                <a href="/contacto" className="hover:opacity-80">Contacto</a>
+            </>
+        );
+    };
 
     return (
-        <header style={headerStyle} className="w-full px-6">
+        <header style={headerStyle} className="w-full px-6 relative">
             {/* Preview */}
             {isPreview && (
                 <div 
-                    className="text-xs opacity-60 bg-black/50 text-white px-2 py-1 rounded"
-                    style={{
-                        position: 'absolute',
-                        bottom: 25,
-                        left: 25,
-                        zIndex: 50
-                    }}
+                    className="text-xs opacity-60 bg-black/50 text-white px-2 py-1 rounded absolute bottom-2 left-2 z-50"
                 >
                     [Header]
                 </div>
             )}
+            
             {/* Contenido */}
-            <div className={`container mx-auto h-full flex items-center`}>
-                <div className={`flex items-center w-full justify-start`}>
+            <div className={`container mx-auto h-full flex items-center justify-between`}>
+                <div className="flex items-center">
                     {logo ? (
                         <img 
                             src={logo} 
@@ -65,27 +87,9 @@ const HeaderBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'ligh
                     )}
                 </div>
                 
-                <nav className="hidden md:flex space-x-6 ml-auto">
-                    {Array.isArray(menu_items) && menu_items.length > 0 ? (
-                        menu_items.map((item: any, idx: number) => (
-                            <a 
-                                key={idx} 
-                                href={item.url || '#'} 
-                                className="hover:opacity-80 transition-opacity"
-                                style={{ color: 'inherit' }}
-                            >
-                                {item.label || 'Enlace'}
-                            </a>
-                        ))
-                    ) : (
-                        <>
-                            <a href="#" className="hover:opacity-80">Inicio</a>
-                            <a href="#" className="hover:opacity-80">Acerca</a>
-                            <a href="#" className="hover:opacity-80">Contacto</a>
-                        </>
-                    )}
+                <nav className="hidden md:flex space-x-6">
+                    {renderMenuItems()}
                 </nav>
-
             </div>
         </header>
     );

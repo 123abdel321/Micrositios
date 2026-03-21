@@ -88,18 +88,15 @@ export default function BuilderIndex({ landings }: Props) {
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {landings.map((landing) => (
                             <Card key={landing.id} className="overflow-hidden">
-                                <CardHeader className="pb-3">
+                                <CardHeader>
                                     <CardTitle className="flex items-center justify-between">
                                         <span className="truncate">{landing.name}</span>
                                         <Badge variant="outline" className="ml-2">
                                             {landing.blocks?.length || 0} bloques
                                         </Badge>
                                     </CardTitle>
-                                    <CardDescription className="line-clamp-2">
-                                        'Sin descripción'
-                                    </CardDescription>
                                 </CardHeader>
-                                <CardContent className="pb-2">
+                                <CardContent>
                                     <p className="text-xs text-muted-foreground">
                                         Slug: /{landing.slug}
                                     </p>
@@ -107,7 +104,7 @@ export default function BuilderIndex({ landings }: Props) {
                                         Creada: {format(new Date(landing.created_at), 'PPP', { locale: es })}
                                     </p>
                                 </CardContent>
-                                <CardFooter className="flex justify-end gap-2 pt-2">
+                                <CardFooter className="flex justify-end gap-2">
                                     <Button
                                         variant="ghost"
                                         size="icon"
