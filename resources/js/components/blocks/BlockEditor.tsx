@@ -168,8 +168,8 @@ const SelectField: React.FC<{
                     </SelectTrigger>
                     <SelectContent className="max-h-60 overflow-y-auto">
                         {selectOptions.map((opt) => (
-                            <SelectItem key={opt.value} value={String(opt.value)}>
-                                {opt.label}
+                            <SelectItem key={opt.id} value={String(`${opt.id}`)}>
+                                {opt.id} - {opt.label}
                             </SelectItem>
                         ))}
                     </SelectContent>
@@ -187,7 +187,7 @@ const SelectField: React.FC<{
                 {selectedValues.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1">
                         {selectedValues.map((val: string) => {
-                            const opt = selectOptions.find(o => String(o.value) === val);
+                            const opt = selectOptions.find(o => String(o.id) === val);
                             return (
                                 <span 
                                     key={val} 

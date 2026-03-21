@@ -22,7 +22,7 @@ class LandingController extends Controller
         if (isset($data['blocks']) && is_string($data['blocks'])) {
             $data['blocks'] = json_decode($data['blocks'], true);
         }
-        dd($data['blocks']);
+
         try {
             // 2. Validar (Si falla, Laravel lanza automáticamente una ValidationException)
             $validated = validator($data, [
@@ -192,13 +192,40 @@ class LandingController extends Controller
         
         // Para selects, verificar si es múltiple
         if ($component->type === 'select') {
-            // configuration ya es array gracias al cast
             $config = $component->configuration ?? [];
             $isMultiple = $config['is_multiple'] ?? false;
             
-            if ($isMultiple && is_array($value)) {
-                return json_encode($value);
+            if ($isMultiple) {
+                // Asegurar que es un array
+                if (is_array($value)) {
+                    // Extraer solo los IDs si vienen con formato "1 - Landing"
+                    $ids = array_map(function($item) {
+                        // Si el valor es "1 - Landing", extraer solo el ID
+                        if (is_string($item) && strpos($item, ' - ') !== false) {
+                            return explode(' - ', $item)[0];
+                        }
+                        return $item;
+                    }, $value);
+                    
+                    // Filtrar valores vacíos
+                    $filtered = array_filter($ids, function($v) {
+                        return $v !== null && $v !== '' && $v !== 'undefined';
+                    });
+                    
+                    return json_encode(array_values($filtered));
+                }
+                return json_encode([]);
             }
+            
+            // Select simple
+            if (is_string($value) && strpos($value, ' - ') !== false) {
+                return explode(' - ', $value)[0];
+            }
+            
+            if ($value === 'undefined' || $value === '') {
+                return null;
+            }
+            return $value;
         }
         
         // Para arrays en general
@@ -221,14 +248,25 @@ class LandingController extends Controller
         
         // Para selects, verificar si es múltiple
         if ($component->type === 'select') {
-            // configuration ya es array gracias al cast
             $config = $component->configuration ?? [];
             $isMultiple = $config['is_multiple'] ?? false;
             
             if ($isMultiple) {
                 $decoded = json_decode($value, true);
-                return is_array($decoded) ? $decoded : $value;
+                if (is_array($decoded)) {
+                    // Filtrar valores undefined
+                    return array_filter($decoded, function($v) {
+                        return $v !== 'undefined';
+                    });
+                }
+                return [];
             }
+            
+            // Select simple
+            if ($value === 'undefined') {
+                return null;
+            }
+            return $value;
         }
         
         // Para external

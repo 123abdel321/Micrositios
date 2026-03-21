@@ -1,4 +1,3 @@
-// HeaderBlock.tsx
 import React from 'react';
 import { useAppData } from '@/contexts/AppDataContext';
 
@@ -27,15 +26,47 @@ const HeaderBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'ligh
         transition: 'all 0.3s ease'
     };
 
+    // Procesar menu_items: puede ser string, array, o JSON
+    const getSelectedIds = (): string[] => {
+        if (!menu_items) return [];
+        
+        // Si es array
+        if (Array.isArray(menu_items)) {
+            return menu_items.map(id => String(id));
+        }
+        
+        // Si es string, intentar parsear JSON
+        if (typeof menu_items === 'string') {
+            try {
+                const parsed = JSON.parse(menu_items);
+                if (Array.isArray(parsed)) {
+                    return parsed.map(id => String(id));
+                }
+                return [String(parsed)];
+            } catch {
+                // Si no es JSON, podría ser un solo ID
+                return [String(menu_items)];
+            }
+        }
+        
+        // Si es número
+        if (typeof menu_items === 'number') {
+            return [String(menu_items)];
+        }
+        
+        return [];
+    };
+
     const renderMenuItems = () => {
         if (loadingMenuItems) {
             return <span className="text-sm">Cargando menú...</span>;
         }
 
-        // Si hay IDs seleccionados en menu_items
-        if (Array.isArray(menu_items) && menu_items.length > 0 && allMenuItems.length > 0) {
+        const selectedIds = getSelectedIds();
+        // Si hay IDs seleccionados
+        if (selectedIds.length > 0 && allMenuItems.length > 0) {
             const selectedItems = allMenuItems.filter(item => 
-                menu_items.includes(item.id) || menu_items.includes(String(item.id))
+                selectedIds.includes(String(item.id))
             );
             
             if (selectedItems.length > 0) {
