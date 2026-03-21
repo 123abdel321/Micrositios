@@ -29,6 +29,8 @@ const HeroBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'light'
         content_alignment = 'center',
         padding_top = 40,
         padding_bottom = 40,
+        padding_left = 20,
+        padding_right = 20,
         button_text,
         button_url,
         button_style = 'primary'
@@ -45,6 +47,8 @@ const HeroBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'light'
         maxHeight: typeof hero_max_height === 'number' ? `${hero_max_height}px` : `${parseInt(hero_max_height)}px`,
         paddingTop: typeof padding_top === 'number' ? `${padding_top}px` : `${parseInt(padding_top)}px`,
         paddingBottom: typeof padding_bottom === 'number' ? `${padding_bottom}px` : `${parseInt(padding_bottom)}px`,
+        paddingRight: typeof padding_right === 'number' ? `${padding_right}px` : `${parseInt(padding_right)}px`,
+        paddingLeft: typeof padding_left === 'number' ? `${padding_left}px` : `${parseInt(padding_left)}px`,
         position: 'relative',
     };
 
@@ -112,7 +116,7 @@ const HeroBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'light'
                 ) : null}
 
 
-                { button_text && !button_url && (
+                { button_text && button_url && (
                     <a 
                         href={button_url || '#'}
                         className={getButtonClasses()}

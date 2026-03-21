@@ -52,7 +52,7 @@ const FooterBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'ligh
         color: textColor || (theme === 'dark' ? '#ffffff' : '#333333'),
         paddingTop: typeof padding_top === 'number' ? `${padding_top}px` : `${parseInt(padding_top)}px`,
         paddingBottom: typeof padding_bottom === 'number' ? `${padding_bottom}px` : `${parseInt(padding_bottom)}px`,
-        ...(show_top_border && {
+        ...(show_top_border == 1 && {
             borderTop: `1px solid ${border_color}`
         })
     };
