@@ -12,7 +12,7 @@ interface Props {
 const BlocksPanel: React.FC<Props> = ({ modules, onAddBlock }) => {
     return (
         // El h-full es vital aquí
-        <div className="h-full flex flex-col">
+        <div className="h-[calc(100vh-150px)] overflow-y-auto flex flex-col">
             <CardHeader className="py-5 shrink-0 border-b bg-background/50 backdrop-blur">
                 <CardTitle className="text-lg flex items-center gap-2">
                     <Layers className="h-5 w-5 text-primary" />

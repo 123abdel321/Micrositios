@@ -295,7 +295,7 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
 
     return (
         <div>
-            <CardContent className="h-[calc(100vh-120px)] overflow-y-auto space-y-4 custom-scrollbar">
+            <CardContent className="h-[calc(100vh-270px)] overflow-y-auto space-y-4 custom-scrollbar">
                 {sortedComponents.map((comp) => (
                     <div key={comp.id} className="space-y-1">
                         <Label htmlFor={comp.name}>

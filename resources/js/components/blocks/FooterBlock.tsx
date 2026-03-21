@@ -23,11 +23,6 @@ interface SocialNetwork {
 }
 
 const FooterBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'light' }) => {
-    const [mounted, setMounted] = useState(false);
-    
-    useEffect(() => {
-        setMounted(true);
-    }, []);
 
     // Valores según tema
     const bgColor = theme === 'dark' ? values.bg_color_dark : values.bg_color_light;
@@ -140,8 +135,6 @@ const FooterBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'ligh
             </div>
         ));
     };
-
-    if (!mounted) return null;
 
     return (
         <footer style={footerStyle} className="w-full">

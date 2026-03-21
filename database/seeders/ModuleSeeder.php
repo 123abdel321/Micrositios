@@ -5,14 +5,13 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Module;
 use App\Models\Component;
-use App\Models\ComponentOption;
 
 class ModuleSeeder extends Seeder
 {
     public function run(): void
     {
         // ============================================
-        // MÓDULO HEADER (module_id = 5)
+        // MÓDULO HEADER
         // ============================================
         $header = Module::create([
             'name' => 'Header',
@@ -121,7 +120,7 @@ class ModuleSeeder extends Seeder
                 'is_required' => false,
                 'order' => 7,
                 'validation_rules' => json_encode(['nullable', 'array']),
-                'data_source' => '/menu-items',
+                'data_source' => '/api/menu-items',
                 'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -141,13 +140,32 @@ class ModuleSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            // Ejemplo de select con opciones estáticas en configuration
+            [
+                'module_id' => $header->id,
+                'label' => 'Posición del logo',
+                'name' => 'logo_position',
+                'type' => 'select',
+                'color_mode' => 'both',
+                'placeholder' => 'left',
+                'is_required' => false,
+                'order' => 9,
+                'validation_rules' => json_encode(['nullable', 'string']),
+                'data_source' => null,
+                'configuration' => json_encode([
+                    'options' => [
+                        ['value' => 'left', 'label' => 'Izquierda'],
+                        ['value' => 'center', 'label' => 'Centro'],
+                        ['value' => 'right', 'label' => 'Derecha'],
+                    ]
+                ]),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ]);
 
-        // Opciones para selects del Header (si las hay)
-        // Header no tiene selects en estos datos
-
         // ============================================
-        // MÓDULO HERO (module_id = 6)
+        // MÓDULO HERO
         // ============================================
         $hero = Module::create([
             'name' => 'Hero',
@@ -201,6 +219,7 @@ class ModuleSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            // Select con opciones en configuration
             [
                 'module_id' => $hero->id,
                 'label' => 'Tamaño de la imagen',
@@ -212,10 +231,18 @@ class ModuleSeeder extends Seeder
                 'order' => 4,
                 'validation_rules' => json_encode(['nullable', 'string']),
                 'data_source' => null,
-                'configuration' => null,
+                'configuration' => json_encode([
+                    'options' => [
+                        ['value' => 'cover', 'label' => 'Cubrir'],
+                        ['value' => 'contain', 'label' => 'Contener'],
+                        ['value' => 'auto', 'label' => 'Automático'],
+                        ['value' => '100% 100%', 'label' => 'Estirar'],
+                    ]
+                ]),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            // Select con opciones en configuration
             [
                 'module_id' => $hero->id,
                 'label' => 'Posición de la imagen',
@@ -227,7 +254,19 @@ class ModuleSeeder extends Seeder
                 'order' => 5,
                 'validation_rules' => json_encode(['nullable', 'string']),
                 'data_source' => null,
-                'configuration' => null,
+                'configuration' => json_encode([
+                    'options' => [
+                        ['value' => 'center', 'label' => 'Centro'],
+                        ['value' => 'top', 'label' => 'Superior'],
+                        ['value' => 'bottom', 'label' => 'Inferior'],
+                        ['value' => 'left', 'label' => 'Izquierda'],
+                        ['value' => 'right', 'label' => 'Derecha'],
+                        ['value' => 'top left', 'label' => 'Superior izquierda'],
+                        ['value' => 'top right', 'label' => 'Superior derecha'],
+                        ['value' => 'bottom left', 'label' => 'Inferior izquierda'],
+                        ['value' => 'bottom right', 'label' => 'Inferior derecha'],
+                    ]
+                ]),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -366,6 +405,7 @@ class ModuleSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            // Select con opciones en configuration
             [
                 'module_id' => $hero->id,
                 'label' => 'Estilo del botón',
@@ -377,10 +417,17 @@ class ModuleSeeder extends Seeder
                 'order' => 20,
                 'validation_rules' => json_encode(['nullable', 'string']),
                 'data_source' => null,
-                'configuration' => null,
+                'configuration' => json_encode([
+                    'options' => [
+                        ['value' => 'primary', 'label' => 'Primario'],
+                        ['value' => 'secondary', 'label' => 'Secundario'],
+                        ['value' => 'outline', 'label' => 'Outline'],
+                    ]
+                ]),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            // Select con opciones en configuration
             [
                 'module_id' => $hero->id,
                 'label' => 'Alineación del contenido',
@@ -392,7 +439,13 @@ class ModuleSeeder extends Seeder
                 'order' => 21,
                 'validation_rules' => json_encode(['nullable', 'string']),
                 'data_source' => null,
-                'configuration' => null,
+                'configuration' => json_encode([
+                    'options' => [
+                        ['value' => 'left', 'label' => 'Izquierda'],
+                        ['value' => 'center', 'label' => 'Centro'],
+                        ['value' => 'right', 'label' => 'Derecha'],
+                    ]
+                ]),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -456,60 +509,52 @@ class ModuleSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            // Ejemplo de select con data_source (carga dinámica desde API)
+            [
+                'module_id' => $hero->id,
+                'label' => 'Landing de destino',
+                'name' => 'target_landing',
+                'type' => 'select',
+                'color_mode' => 'both',
+                'placeholder' => 'Selecciona una landing',
+                'is_required' => false,
+                'order' => 26,
+                'validation_rules' => json_encode(['nullable', 'string']),
+                'data_source' => '/api/landings/options',
+                'configuration' => json_encode([
+                    'is_multiple' => false,
+                    'searchable' => true,
+                    'placeholder' => 'Busca una landing...'
+                ]),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            // Ejemplo de select múltiple con data_source
+            [
+                'module_id' => $hero->id,
+                'label' => 'Múltiples landings',
+                'name' => 'multiple_landings',
+                'type' => 'select',
+                'color_mode' => 'both',
+                'placeholder' => 'Selecciona varias landings',
+                'is_required' => false,
+                'order' => 27,
+                'validation_rules' => json_encode(['nullable', 'array']),
+                'data_source' => '/api/landings/options',
+                'configuration' => json_encode([
+                    'is_multiple' => true,
+                    'searchable' => true,
+                    'max_selections' => 5,
+                    'allow_clear' => true,
+                    'placeholder' => 'Selecciona una o más opciones'
+                ]),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ]);
 
-        // Opciones para selects del Hero
-        $heroSelects = [
-            'bg_image_size' => [
-                ['Cubrir', 'cover', 1],
-                ['Contener', 'contain', 2],
-                ['Automático', 'auto', 3],
-                ['Estirar', '100% 100%', 4],
-            ],
-            'bg_image_position' => [
-                ['Centro', 'center', 1],
-                ['Superior', 'top', 2],
-                ['Inferior', 'bottom', 3],
-                ['Izquierda', 'left', 4],
-                ['Derecha', 'right', 5],
-                ['Superior izquierda', 'top left', 6],
-                ['Superior derecha', 'top right', 7],
-                ['Inferior izquierda', 'bottom left', 8],
-                ['Inferior derecha', 'bottom right', 9],
-            ],
-            'button_style' => [
-                ['Primario', 'primary', 1],
-                ['Secundario', 'secondary', 2],
-                ['Outline', 'outline', 3],
-            ],
-            'content_alignment' => [
-                ['Izquierda', 'left', 1],
-                ['Centro', 'center', 2],
-                ['Derecha', 'right', 3],
-            ],
-        ];
-
-        foreach ($heroSelects as $name => $options) {
-            $component = Component::where('module_id', $hero->id)
-                ->where('name', $name)
-                ->first();
-            
-            if ($component) {
-                foreach ($options as $option) {
-                    ComponentOption::insert([
-                        'component_id' => $component->id,
-                        'label' => $option[0],
-                        'value' => $option[1],
-                        'order' => $option[2],
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                }
-            }
-        }
-
         // ============================================
-        // MÓDULO FOOTER (module_id = 7)
+        // MÓDULO FOOTER
         // ============================================
         $footer = Module::create([
             'name' => 'Footer',
@@ -618,7 +663,7 @@ class ModuleSeeder extends Seeder
                 'is_required' => true,
                 'order' => 7,
                 'validation_rules' => json_encode(['required', 'array']),
-                'data_source' => '/footer-columns',
+                'data_source' => '/api/footer-columns',
                 'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -633,7 +678,7 @@ class ModuleSeeder extends Seeder
                 'is_required' => false,
                 'order' => 8,
                 'validation_rules' => json_encode(['nullable', 'array']),
-                'data_source' => '/social-networks',
+                'data_source' => '/api/social-networks',
                 'configuration' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -653,6 +698,7 @@ class ModuleSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            // Select con opciones en configuration
             [
                 'module_id' => $footer->id,
                 'label' => 'Posición de redes sociales',
@@ -664,7 +710,13 @@ class ModuleSeeder extends Seeder
                 'order' => 10,
                 'validation_rules' => json_encode(['nullable', 'string']),
                 'data_source' => null,
-                'configuration' => null,
+                'configuration' => json_encode([
+                    'options' => [
+                        ['value' => 'top', 'label' => 'Superior'],
+                        ['value' => 'bottom', 'label' => 'Inferior'],
+                        ['value' => 'per_column', 'label' => 'En cada columna'],
+                    ]
+                ]),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -728,6 +780,7 @@ class ModuleSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            // Select con opciones en configuration
             [
                 'module_id' => $footer->id,
                 'label' => 'Ancho del footer',
@@ -739,43 +792,16 @@ class ModuleSeeder extends Seeder
                 'order' => 15,
                 'validation_rules' => json_encode(['nullable', 'string']),
                 'data_source' => null,
-                'configuration' => null,
+                'configuration' => json_encode([
+                    'options' => [
+                        ['value' => 'container', 'label' => 'Contenedor'],
+                        ['value' => 'full', 'label' => 'Ancho completo'],
+                        ['value' => 'container-fluid', 'label' => 'Contenedor fluido'],
+                    ]
+                ]),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
         ]);
-
-        // Opciones para selects del Footer
-        $footerSelects = [
-            'social_position' => [
-                ['Superior', 'top', 1],
-                ['Inferior', 'bottom', 2],
-                ['En cada columna', 'per_column', 3],
-            ],
-            'footer_width' => [
-                ['Contenedor', 'container', 1],
-                ['Ancho completo', 'full', 2],
-                ['Contenedor fluido', 'container-fluid', 3],
-            ],
-        ];
-
-        foreach ($footerSelects as $name => $options) {
-            $component = Component::where('module_id', $footer->id)
-                ->where('name', $name)
-                ->first();
-            
-            if ($component) {
-                foreach ($options as $option) {
-                    ComponentOption::insert([
-                        'component_id' => $component->id,
-                        'label' => $option[0],
-                        'value' => $option[1],
-                        'order' => $option[2],
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                }
-            }
-        }
     }
 }
