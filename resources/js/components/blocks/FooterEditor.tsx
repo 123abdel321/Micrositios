@@ -4,7 +4,16 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Plus, Trash2, GripVertical } from 'lucide-react';
+import {
+    Plus,
+    Trash2,
+    GripVertical,
+    Facebook,
+    Twitter,
+    Instagram,
+    Linkedin,
+    MessageCircle
+} from 'lucide-react';
 import { useAppData } from '@/contexts/AppDataContext';
 
 interface ColumnType {
@@ -51,12 +60,12 @@ const FooterEditor: React.FC<Props> = ({ value, onChange }) => {
         { value: 'contact', label: 'Contacto' }
     ];
     
-    const socialPlatforms: SocialPlatform[] = [
-        { value: 'facebook', label: 'Facebook', icon: '📘', default_url: 'https://facebook.com/' },
-        { value: 'twitter', label: 'Twitter', icon: '🐦', default_url: 'https://twitter.com/' },
-        { value: 'instagram', label: 'Instagram', icon: '📷', default_url: 'https://instagram.com/' },
-        { value: 'linkedin', label: 'LinkedIn', icon: '🔗', default_url: 'https://linkedin.com/in/' },
-        { value: 'whatsapp', label: 'WhatsApp', icon: '💬', default_url: 'https://wa.me/' }
+    const socialPlatforms = [
+        { value: 'facebook', label: 'Facebook', icon: <Facebook size={16} />, default_url: 'https://facebook.com/' },
+        { value: 'twitter', label: 'Twitter', icon: <Twitter size={16} />, default_url: 'https://twitter.com/' },
+        { value: 'instagram', label: 'Instagram', icon: <Instagram size={16} />, default_url: 'https://instagram.com/' },
+        { value: 'linkedin', label: 'LinkedIn', icon: <Linkedin size={16} />, default_url: 'https://linkedin.com/in/' },
+        { value: 'whatsapp', label: 'WhatsApp', icon: <MessageCircle size={16} />, default_url: 'https://wa.me/' }
     ];
 
     // Inicializar desde value UNA SOLA VEZ
@@ -95,14 +104,10 @@ const FooterEditor: React.FC<Props> = ({ value, onChange }) => {
 
     // Notificar cambios al padre
     useEffect(() => {
-        if (isInitialized.current && !isUpdating.current) {
-            isUpdating.current = true;
+        if (isInitialized.current) {
             onChange(columns);
-            setTimeout(() => {
-                isUpdating.current = false;
-            }, 0);
         }
-    }, [columns, onChange]);
+    }, [columns]);
 
     const addColumn = useCallback(() => {
         if (columns.length >= 5) return;
@@ -200,7 +205,10 @@ const FooterEditor: React.FC<Props> = ({ value, onChange }) => {
                             <SelectContent>
                                 {socialPlatforms.map((p) => (
                                     <SelectItem key={p.value} value={p.value}>
-                                        {p.icon} {p.label}
+                                        <div className="flex items-center gap-2">
+                                            {p.icon}
+                                            <span>{p.label}</span>
+                                        </div>
                                     </SelectItem>
                                 ))}
                             </SelectContent>
@@ -351,26 +359,26 @@ const FooterEditor: React.FC<Props> = ({ value, onChange }) => {
     }
 
     return (
-        <div className="h-[calc(100vh-240px)] overflow-y-auto space-y-4 custom-scrollbar">
+        <div className="h-full overflow-y-auto space-y-4 custom-scrollbar">
             {columns.map((column, index) => (
                 <Card key={column.id} className="relative">
                     <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
                             <div className="flex items-center gap-2 flex-1">
                                 <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
                                 <Input
                                     value={column.title}
                                     onChange={(e) => updateColumn(index, { title: e.target.value })}
-                                    className="w-48 font-semibold"
+                                    className="flex-1 min-w-[120px] font-semibold"
                                     placeholder="Título de la columna"
                                 />
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1 shrink-0">
                                 <Select
                                     value={column.type}
                                     onValueChange={(val: any) => updateColumn(index, { type: val })}
                                 >
-                                    <SelectTrigger className="w-32">
+                                    <SelectTrigger className="w-[110px] h-8 text-xs">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -381,9 +389,11 @@ const FooterEditor: React.FC<Props> = ({ value, onChange }) => {
                                         ))}
                                     </SelectContent>
                                 </Select>
+
                                 <Button
                                     variant="ghost"
                                     size="icon"
+                                    className="h-8 w-8"
                                     onClick={() => removeColumn(index)}
                                 >
                                     <Trash2 className="h-4 w-4 text-red-500" />

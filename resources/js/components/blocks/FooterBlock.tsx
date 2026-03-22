@@ -1,4 +1,17 @@
 import React from 'react';
+import { useAppData } from '@/contexts/AppDataContext';
+import {
+    Facebook,
+    Twitter,
+    Instagram,
+    Linkedin,
+    Youtube,
+    MessageCircle,
+    Music2,
+    Phone,
+    Mail,
+    MapPin
+} from 'lucide-react';
 
 interface Props {
     values: Record<string, any>;
@@ -6,23 +19,23 @@ interface Props {
     theme?: 'light' | 'dark';
 }
 
-interface Column {
+interface ColumnItem {
+    id: string;
+    type: 'links' | 'social' | 'contact';
     title: string;
-    links: Array<{
-        label: string;
-        url: string;
-        target?: '_blank' | '_self';
-    }>;
-}
-
-interface SocialNetwork {
-    platform: string;
-    url: string;
-    icon?: string;
-    active: boolean;
+    links?: number[];
+    socials?: Array<{ platform: string; url: string }>;
+    contact?: {
+        phones?: string[];
+        email?: string;
+        address?: string;
+        whatsapp?: string;
+        whatsapp_message?: string;
+    };
 }
 
 const FooterBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'light' }) => {
+    const { menuItems } = useAppData();
 
     // Valores según tema
     const bgColor = theme === 'dark' ? values.bg_color_dark : values.bg_color_light;
@@ -32,9 +45,6 @@ const FooterBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'ligh
         copyright_text = '© 2026 Tu Empresa. Todos los derechos reservados.',
         columns_count = 4,
         footer_columns = [],
-        social_networks = [],
-        show_social = true,
-        social_position = 'bottom',
         padding_top = 40,
         padding_bottom = 40,
         show_top_border = false,
@@ -65,148 +75,227 @@ const FooterBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'ligh
 
     const getGridCols = () => {
         const cols = Math.min(columns_count, 6);
-        return `grid-cols-1 md:grid-cols-2 lg:grid-cols-${cols}`;
+        const gridClasses: Record<number, string> = {
+            1: 'grid-cols-1',
+            2: 'grid-cols-1 md:grid-cols-2',
+            3: 'grid-cols-1 md:grid-cols-3',
+            4: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4',
+            5: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-5',
+            6: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-6'
+        };
+        return gridClasses[cols] || 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4';
     };
 
-    // FooterBlock.tsx - Actualiza renderSocialNetworks
-    const renderSocialNetworks = () => {
-        // Si social_networks es un array de strings (IDs o nombres de plataformas)
-        let activeSocials: SocialNetwork[] = [];
-        
-        if (Array.isArray(social_networks)) {
-            // Si es array de strings, convertirlos a objetos
-            activeSocials = social_networks.map((platform: string) => ({
-                platform: platform,
-                url: `https://${platform}.com/tuempresa`,
-                icon: platform.slice(0, 2).toUpperCase(),
-                active: true
-            }));
-        } else if (typeof social_networks === 'string' && social_networks) {
+    // Procesar footer_columns - puede ser string JSON o array
+    const getColumns = (): ColumnItem[] => {
+        if (!footer_columns) return [];
+
+        if (Array.isArray(footer_columns)) {
+            return footer_columns;
+        }
+
+        if (typeof footer_columns === 'string') {
             try {
-                const parsed = JSON.parse(social_networks);
+                const parsed = JSON.parse(footer_columns);
+
                 if (Array.isArray(parsed)) {
-                    activeSocials = parsed;
+                    return parsed;
                 }
+
+                return [];
             } catch (e) {
-                // Si no es JSON, podría ser un string separado por comas
-                const platforms = social_networks.split(',').map(p => p.trim());
-                activeSocials = platforms.map(platform => ({
-                    platform: platform,
-                    url: `https://${platform}.com/tuempresa`,
-                    icon: platform.slice(0, 2).toUpperCase(),
-                    active: true
-                }));
+                console.error('Error parsing footer_columns:', e, footer_columns);
+                return [];
             }
         }
-        
-        if (activeSocials.length === 0) return null;
 
+        return [];
+    };
+
+    const columns = getColumns();
+
+    const renderLinksColumn = (column: ColumnItem) => {
+        const linkIds = column.links || [];
+        
+        // Obtener los items del menú por sus IDs
+        const itemsToShow = menuItems?.filter((item) => 
+            item.id !== null && linkIds.includes(item.id)
+        ) || [];
+        
+        if (itemsToShow.length === 0) {
+            return (
+                <ul className="space-y-2">
+                    <li><a href="#" className="hover:underline">Sin enlaces</a></li>
+                </ul>
+            );
+        }
+        
         return (
-            <div className="flex space-x-4 justify-center lg:justify-start">
-                {activeSocials.map((social: SocialNetwork, idx: number) => (
+            <ul className="space-y-2">
+                {itemsToShow.map((item, idx: number) => (
+                    <li key={idx}>
+                        <a 
+                            href={item.url}
+                            target="_self"
+                            className="hover:underline transition-all"
+                            style={{ color: 'inherit' }}
+                        >
+                            {item.label}
+                        </a>
+                    </li>
+                ))}
+            </ul>
+        );
+    };
+
+    const renderSocialColumn = (column: ColumnItem) => {
+        const socials = column.socials || [];
+        
+        if (socials.length === 0) return null;
+        
+        return (
+            <div className="flex flex-col space-y-3">
+                {socials.map((social, idx) => (
                     <a
                         key={idx}
-                        href={social.url}
+                        href={social.url.startsWith('http') ? social.url : `https://${social.url}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="hover:opacity-80 transition-opacity text-2xl"
+                        className="hover:opacity-80 transition-opacity flex items-center gap-2"
                         style={{ color: 'inherit' }}
-                        aria-label={social.platform}
                     >
-                        {social.icon || social.platform.slice(0, 2).toUpperCase()}
+                        <span className="text-xl">{getSocialIcon(social.platform)}</span>
+                        <span>{capitalize(social.platform)}</span>
                     </a>
                 ))}
             </div>
         );
     };
 
+    const renderContactColumn = (column: ColumnItem) => {
+        const contact = column.contact || {};
+        
+        return (
+            <div className="space-y-3">
+                {contact.phones?.map((phone, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                        <Phone size={16} />
+                        <a href={`tel:${phone}`} className="hover:underline">
+                            {phone}
+                        </a>
+                    </div>
+                ))}
+
+                {contact.email && (
+                    <div className="flex items-center gap-2">
+                        <Mail size={16} />
+                        <a href={`mailto:${contact.email}`} className="hover:underline">
+                            {contact.email}
+                        </a>
+                    </div>
+                )}
+
+                {contact.address && (
+                    <div className="flex items-center gap-2">
+                        <MapPin size={16} />
+                        <span>{contact.address}</span>
+                    </div>
+                )}
+
+                {contact.whatsapp && (
+                    <div className="flex items-center gap-2">
+                        <MessageCircle size={16} />
+                        <a 
+                            href={`https://wa.me/${contact.whatsapp}${contact.whatsapp_message ? `?text=${encodeURIComponent(contact.whatsapp_message)}` : ''}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:underline"
+                        >
+                            WhatsApp
+                        </a>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const getSocialIcon = (platform: string) => {
+        const icons: Record<string, React.ReactNode> = {
+            facebook: <Facebook size={18} />,
+            twitter: <Twitter size={18} />,
+            instagram: <Instagram size={18} />,
+            linkedin: <Linkedin size={18} />,
+            youtube: <Youtube size={18} />,
+            whatsapp: <MessageCircle size={18} />,
+            tiktok: <Music2 size={18} />
+        };
+
+        return icons[platform.toLowerCase()] || <span>🔗</span>;
+    };
+
+    const capitalize = (str: string): string => {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    };
+
+    const renderColumnContent = (column: ColumnItem) => {
+        switch (column.type) {
+            case 'links':
+                return renderLinksColumn(column);
+            case 'social':
+                return renderSocialColumn(column);
+            case 'contact':
+                return renderContactColumn(column);
+            default:
+                return null;
+        }
+    };
+
+    // Renderizar columnas
     const renderColumns = () => {
-        if (!footer_columns || footer_columns.length === 0) {
+        if (columns.length === 0) {
             // Columnas por defecto
             return (
                 <>
                     <div>
                         <h3 className="font-semibold mb-4">Enlaces</h3>
                         <ul className="space-y-2">
-                            <li><a href="#" className="hover:underline">Inicio</a></li>
-                            <li><a href="#" className="hover:underline">Acerca</a></li>
-                            <li><a href="#" className="hover:underline">Contacto</a></li>
+                            <li><a href="/" className="hover:underline">Inicio</a></li>
+                            <li><a href="/sobre-nosotros" className="hover:underline">Acerca</a></li>
+                            <li><a href="/contacto" className="hover:underline">Contacto</a></li>
                         </ul>
                     </div>
                     <div>
                         <h3 className="font-semibold mb-4">Legal</h3>
                         <ul className="space-y-2">
-                            <li><a href="#" className="hover:underline">Privacidad</a></li>
-                            <li><a href="#" className="hover:underline">Términos</a></li>
+                            <li><a href="/privacidad" className="hover:underline">Privacidad</a></li>
+                            <li><a href="/terminos" className="hover:underline">Términos</a></li>
                         </ul>
                     </div>
                 </>
             );
         }
 
-        return footer_columns.map((column: Column, idx: number) => (
-            <div key={idx}>
+        return columns.map((column, idx) => (
+            <div key={column.id || idx}>
                 <h3 className="font-semibold mb-4">{column.title}</h3>
-                <ul className="space-y-2">
-                    {column.links && column.links.map((link, linkIdx) => (
-                        <li key={linkIdx}>
-                            <a 
-                                href={link.url}
-                                target={link.target || '_self'}
-                                className="hover:underline transition-all"
-                            >
-                                {link.label}
-                            </a>
-                        </li>
-                    ))}
-                </ul>
+                {renderColumnContent(column)}
             </div>
         ));
     };
 
     return (
-        <footer style={footerStyle} className="w-full">
-            {/* Preview indicator */}
+        <footer style={footerStyle} className="w-full relative">
             {isPreview && (
                 <div 
-                    className="text-xs opacity-60 bg-black/50 text-white px-2 py-1 rounded"
-                    style={{
-                        position: 'absolute',
-                        bottom: 25,
-                        left: 25,
-                        zIndex: 50
-                    }}
+                    className="text-xs opacity-60 bg-black/50 text-white px-2 py-1 rounded absolute bottom-2 left-2 z-50"
                 >
-                    [Footers]
+                    [Footer]
                 </div>
             )}
             <div className={getContainerClass()}>
-                {/* Redes sociales arriba */}
-                {show_social && social_position === 'top' && (
-                    <div className="mb-8">
-                        {renderSocialNetworks()}
-                    </div>
-                )}
-
-                {/* Columnas */}
                 <div className={`grid ${getGridCols()} gap-8 mb-8`}>
                     {renderColumns()}
-
-                    {/* Redes sociales por columna */}
-                    {show_social && social_position === 'per_column' && (
-                        <div>
-                            <h3 className="font-semibold mb-4">Síguenos</h3>
-                            {renderSocialNetworks()}
-                        </div>
-                    )}
                 </div>
-
-                {/* Redes sociales abajo */}
-                {show_social && social_position === 'bottom' && (
-                    <div className="mb-6">
-                        {renderSocialNetworks()}
-                    </div>
-                )}
 
                 {/* Copyright */}
                 <div className="text-sm text-center pt-6 border-t border-current/20">
