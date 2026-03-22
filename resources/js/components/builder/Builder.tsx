@@ -7,6 +7,8 @@ import { createBlockFromModule } from '@/lib/blockUtils';
 import BlocksPanel from './BlocksPanel';
 import Canvas from './Canvas';
 import PropertiesPanel from './PropertiesPanel';
+import { DragOverlay } from '@dnd-kit/core';
+import BlockRenderer from '@/components/blocks/BlockRenderer';
 
 export interface BuilderRef {
     getBlocks: () => Block[];
@@ -25,6 +27,7 @@ const Builder = forwardRef<BuilderRef, Props>(({ modules, landing }, ref) => {
     const [blocks, setBlocks] = useState<Block[]>(landing.blocks || []);
     const [selectedBlockIndex, setSelectedBlockIndex] = useState<number | null>(null);
     const [mobileTab, setMobileTab] = useState<MobileTab>('canvas');
+    const [activeBlock, setActiveBlock] = useState<Block | null>(null);
 
     // Cuando se selecciona un bloque en móvil, ir automáticamente a propiedades
     const handleSelectBlock = useCallback((index: number) => {
@@ -88,7 +91,19 @@ const Builder = forwardRef<BuilderRef, Props>(({ modules, landing }, ref) => {
     }));
 
     const canvasContent = (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={(event) => {
+                const activeId = event.active.id;
+                const found = blocks.find((b, i) => (b.id || `new-${i}`) === activeId);
+                setActiveBlock(found || null);
+            }}
+            onDragEnd={(event) => {
+                handleDragEnd(event);
+                setActiveBlock(null);
+            }}
+        >
             <SortableContext items={itemsWithId.map(i => i.uniqueId)} strategy={verticalListSortingStrategy}>
                 <Canvas
                     blocks={blocks}
@@ -97,6 +112,13 @@ const Builder = forwardRef<BuilderRef, Props>(({ modules, landing }, ref) => {
                     onDeleteBlock={handleDeleteBlock}
                 />
             </SortableContext>
+            <DragOverlay>
+                {activeBlock ? (
+                    <div className="opacity-90 shadow-xl scale-105">
+                        <BlockRenderer block={activeBlock} isPreview />
+                    </div>
+                ) : null}
+            </DragOverlay>
         </DndContext>
     );
 
@@ -148,7 +170,7 @@ const Builder = forwardRef<BuilderRef, Props>(({ modules, landing }, ref) => {
             <div className="hidden md:flex flex-1 h-full overflow-hidden">
 
                 {/* Panel izquierdo */}
-                <div className="w-54 border-r overflow-hidden shrink-0">
+                <div className="w-56 border-r overflow-hidden shrink-0">
                     <BlocksPanel modules={modules} onAddBlock={handleAddBlock} />
                 </div>
 

@@ -33,7 +33,7 @@ const SortableBlock: React.FC<SortableBlockProps> = ({
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        opacity: isDragging ? 0.5 : 1,
+        opacity: isDragging ? 0 : 1,
     };
 
     return (
@@ -41,6 +41,8 @@ const SortableBlock: React.FC<SortableBlockProps> = ({
             ref={setNodeRef}
             style={style}
             className={`relative group border-2 rounded-lg mb-4 transition-all ${
+                isDragging ? 'shadow-none' : ''
+            } ${
                 isSelected
                     ? 'border-primary ring-2 ring-primary/20'
                     : 'border-border hover:border-primary/50'
