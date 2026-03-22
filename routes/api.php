@@ -1,8 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\SelectOptionsController;
+//CONTROLLERS
+use App\Http\Controllers\Api\OptionsController;
 use App\Http\Controllers\Api\MenuItemsController;
+use App\Http\Controllers\Api\FooterConfigController;
+use App\Http\Controllers\Api\SelectOptionsController;
 use App\Http\Controllers\Api\FooterColumnsController;
 use App\Http\Controllers\Api\SocialNetworksController;
 
@@ -10,19 +13,19 @@ use App\Http\Controllers\Api\SocialNetworksController;
 // ENDPOINTS PARA DATOS EXTERNOS DE LOS BLOQUES
 // ============================================
 
-// Menu Items (para HeaderBlock)
-Route::get('/menu-items', [MenuItemsController::class, 'index']);
-Route::get('/menu-items/{landingId}', [MenuItemsController::class, 'getForLanding']);
-
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/landings/options', [SelectOptionsController::class, 'getLandings']);
     Route::get('/select-options/{type}', [SelectOptionsController::class, 'getOptions']);
 });
 
-// Footer Columns (para FooterBlock)
-// Route::get('/footer-columns', [FooterColumnsController::class, 'index']);
-// Route::get('/footer-columns/{landingId}', [FooterColumnsController::class, 'getForLanding']);
+// HeaderBlock Menu Items
+Route::get('/menu-items', [MenuItemsController::class, 'index']);
+Route::get('/menu-items/{landingId}', [MenuItemsController::class, 'getForLanding']);
 
-// // Social Networks (para FooterBlock)
-// Route::get('/social-networks', [SocialNetworksController::class, 'index']);
-// Route::get('/social-networks/{landingId}', [SocialNetworksController::class, 'getForLanding']);
+// Footer Config
+Route::get('/footer-config', [FooterConfigController::class, 'index']);
+Route::get('/footer-config/{landingId}', [FooterConfigController::class, 'getForLanding']);
+
+// Opciones
+Route::get('/column-types', [OptionsController::class, 'getColumnTypes']);
+Route::get('/social-platforms', [OptionsController::class, 'getSocialPlatforms']);

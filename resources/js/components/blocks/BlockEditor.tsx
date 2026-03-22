@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { useAppData } from '@/contexts/AppDataContext';
+import FooterEditor from '@/components/blocks/FooterEditor';
 
 interface Props {
     block: Block;
@@ -229,6 +230,8 @@ const SelectField: React.FC<{
     );
 };
 
+// En BlockEditor.tsx, encuentra donde está definido fetchedRef y agrega un loadedDataRef para external
+
 const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
     // Memoizar los componentes ordenados
     const sortedComponents = React.useMemo(
@@ -238,7 +241,7 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
     
     const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
     const [errorStates, setErrorStates] = useState<Record<string, string>>({});
-    const fetchedRef = useRef<Set<string>>(new Set());
+    const loadedExternalRef = useRef<Set<string>>(new Set());
 
     const toInputValue = (v: unknown): string | number => {
         if (typeof v === 'string' || typeof v === 'number') return v;
@@ -249,12 +252,14 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
         if (!component.data_source) return;
 
         const fetchKey = `${component.id}-${component.name}`;
-        if (fetchedRef.current.has(fetchKey)) return;
-
+        
+        // 👈 Verificar si ya se cargó este componente
+        if (loadedExternalRef.current.has(fetchKey)) return;
+        
         const currentValue = block.values[component.name];
         if (currentValue && (Array.isArray(currentValue) && currentValue.length > 0) || 
             (typeof currentValue === 'object' && currentValue !== null && Object.keys(currentValue).length > 0)) {
-            fetchedRef.current.add(fetchKey);
+            loadedExternalRef.current.add(fetchKey);
             return;
         }
 
@@ -272,7 +277,7 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
             }
             
             const data = await response.json();
-            fetchedRef.current.add(fetchKey);
+            loadedExternalRef.current.add(fetchKey);
             onChange(component.name, data);
             
         } catch (error) {
@@ -285,13 +290,18 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
         }
     }, [block.values, onChange]);
 
+    // 👈 Usar useEffect con dependencias correctas y solo ejecutar una vez
     useEffect(() => {
         let isMounted = true;
         
         const loadExternalData = async () => {
             for (const component of sortedComponents) {
                 if (component.type === 'external' && component.data_source && isMounted) {
-                    await fetchExternalData(component);
+                    // 👈 Solo cargar si no está en loadedExternalRef
+                    const fetchKey = `${component.id}-${component.name}`;
+                    if (!loadedExternalRef.current.has(fetchKey)) {
+                        await fetchExternalData(component);
+                    }
                 }
             }
         };
@@ -371,7 +381,7 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
                             id={component.name}
                             value={toInputValue(value)}
                             onChange={(e) => onChange(component.name, e.target.value)}
-                            placeholder={component.placeholder || "https://example.com/image.jpg"}
+                            placeholder={component.placeholder || 'https://example.com/image.jpg'}
                         />
                         {typeof value === 'string' && value && (
                             <img
@@ -384,6 +394,38 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
                 );
 
             case 'external':
+                if (component.name === 'footer_columns' || component.name === 'social_networks') {
+                    const externalValue =
+                        Array.isArray(value) || typeof value === 'string' || value === null
+                            ? value
+                            : null;
+                    
+                    // Para social_networks, necesitas un editor similar
+                    if (component.name === 'social_networks') {
+                        // Podrías crear un SocialNetworksEditor similar
+                        // Por ahora, mostrar un placeholder
+                        return (
+                            <div className="text-sm border rounded bg-muted/50 p-3">
+                                <p className="text-muted-foreground text-xs">
+                                    Redes sociales configuradas desde el panel de administración
+                                </p>
+                                {value && Array.isArray(value) && value.length > 0 && (
+                                    <pre className="text-xs overflow-auto max-h-40 p-2 bg-muted rounded mt-2">
+                                        {JSON.stringify(value, null, 2)}
+                                    </pre>
+                                )}
+                            </div>
+                        );
+                    }
+                    
+                    return (
+                        <FooterEditor
+                            value={externalValue}
+                            onChange={(newValue) => onChange(component.name, newValue)}
+                        />
+                    );
+                }
+
                 return (
                     <div className="text-sm border rounded bg-muted/50">
                         {isLoading ? (
@@ -395,10 +437,10 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
                             <div className="p-4 text-red-500">
                                 <p className="font-semibold">Error al cargar datos</p>
                                 <p className="text-xs">{error}</p>
-                                <button 
+                                <button
                                     onClick={() => {
                                         const fetchKey = `${component.id}-${component.name}`;
-                                        fetchedRef.current.delete(fetchKey);
+                                        loadedExternalRef.current.delete(fetchKey);
                                         fetchExternalData(component);
                                     }}
                                     className="mt-2 text-xs underline hover:no-underline"
@@ -412,10 +454,10 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
                                     <span className="text-muted-foreground text-xs">
                                         Fuente: {component.data_source}
                                     </span>
-                                    <button 
+                                    <button
                                         onClick={() => {
                                             const fetchKey = `${component.id}-${component.name}`;
-                                            fetchedRef.current.delete(fetchKey);
+                                            loadedExternalRef.current.delete(fetchKey);
                                             fetchExternalData(component);
                                         }}
                                         className="text-xs text-primary hover:underline"
@@ -478,9 +520,9 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
 
     return (
         <div>
-            <CardContent className="h-[calc(100vh-240px)] overflow-y-auto space-y-4 custom-scrollbar">
+            <CardContent className="h-[calc(100vh-240px)] overflow-y-auto space-y-4 w-full">
                 {sortedComponents.map((comp) => (
-                    <div key={comp.id} className="space-y-1">
+                    <div key={comp.id} className="">
                         <Label htmlFor={comp.name}>
                             {comp.label}
                             {comp.is_required && <span className="text-red-500 ml-1">*</span>}

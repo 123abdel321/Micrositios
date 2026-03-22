@@ -68,8 +68,36 @@ const FooterBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'ligh
         return `grid-cols-1 md:grid-cols-2 lg:grid-cols-${cols}`;
     };
 
+    // FooterBlock.tsx - Actualiza renderSocialNetworks
     const renderSocialNetworks = () => {
-        const activeSocials = social_networks ? social_networks.filter((s: SocialNetwork) => s.active) : [];
+        // Si social_networks es un array de strings (IDs o nombres de plataformas)
+        let activeSocials: SocialNetwork[] = [];
+        
+        if (Array.isArray(social_networks)) {
+            // Si es array de strings, convertirlos a objetos
+            activeSocials = social_networks.map((platform: string) => ({
+                platform: platform,
+                url: `https://${platform}.com/tuempresa`,
+                icon: platform.slice(0, 2).toUpperCase(),
+                active: true
+            }));
+        } else if (typeof social_networks === 'string' && social_networks) {
+            try {
+                const parsed = JSON.parse(social_networks);
+                if (Array.isArray(parsed)) {
+                    activeSocials = parsed;
+                }
+            } catch (e) {
+                // Si no es JSON, podría ser un string separado por comas
+                const platforms = social_networks.split(',').map(p => p.trim());
+                activeSocials = platforms.map(platform => ({
+                    platform: platform,
+                    url: `https://${platform}.com/tuempresa`,
+                    icon: platform.slice(0, 2).toUpperCase(),
+                    active: true
+                }));
+            }
+        }
         
         if (activeSocials.length === 0) return null;
 
@@ -120,7 +148,7 @@ const FooterBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'ligh
             <div key={idx}>
                 <h3 className="font-semibold mb-4">{column.title}</h3>
                 <ul className="space-y-2">
-                    {column.links.map((link, linkIdx) => (
+                    {column.links && column.links.map((link, linkIdx) => (
                         <li key={linkIdx}>
                             <a 
                                 href={link.url}
