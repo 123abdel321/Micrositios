@@ -21,13 +21,6 @@ interface ColumnType {
     label: string;
 }
 
-interface SocialPlatform {
-    value: string;
-    label: string;
-    icon: string;
-    default_url: string;
-}
-
 interface Column {
     id: string;
     type: 'links' | 'social' | 'contact';
@@ -52,7 +45,6 @@ const FooterEditor: React.FC<Props> = ({ value, onChange }) => {
     const { menuItems } = useAppData();
     const [columns, setColumns] = useState<Column[]>([]);
     const isInitialized = useRef(false);
-    const isUpdating = useRef(false);
 
     const columnTypes: ColumnType[] = [
         { value: 'links', label: 'Enlaces' },

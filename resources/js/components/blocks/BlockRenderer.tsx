@@ -1,5 +1,5 @@
 // components/blocks/BlockRenderer.tsx
-import React, { useEffect, useState } from 'react';
+import React  from 'react';
 import { useAppearance } from '@/hooks/use-appearance';
 import { Block } from '@/types/builder';
 import HeaderBlock from '@/components/blocks/HeaderBlock';
