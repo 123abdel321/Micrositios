@@ -114,14 +114,18 @@ class ModuleSeeder extends Seeder
                 'module_id' => $header->id,
                 'label' => 'Elementos del menú',
                 'name' => 'menu_items',
-                'type' => 'external',
+                'type' => 'select',
                 'color_mode' => 'both',
                 'placeholder' => null,
                 'is_required' => false,
                 'order' => 7,
                 'validation_rules' => json_encode(['nullable', 'array']),
-                'data_source' => '/api/menu-items',
-                'configuration' => null,
+                'data_source' => 'menu-items',
+                'configuration' => json_encode([
+                    'is_multiple' => true,
+                    'allow_clear' => true,
+                    'placeholder' => 'Selecciona las páginas del menú'
+                ]),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -140,7 +144,6 @@ class ModuleSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            // Ejemplo de select con opciones estáticas en configuration
             [
                 'module_id' => $header->id,
                 'label' => 'Posición del logo',
@@ -219,7 +222,6 @@ class ModuleSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            // Select con opciones en configuration
             [
                 'module_id' => $hero->id,
                 'label' => 'Tamaño de la imagen',
@@ -242,7 +244,6 @@ class ModuleSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            // Select con opciones en configuration
             [
                 'module_id' => $hero->id,
                 'label' => 'Posición de la imagen',
@@ -405,7 +406,6 @@ class ModuleSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            // Select con opciones en configuration
             [
                 'module_id' => $hero->id,
                 'label' => 'Estilo del botón',
@@ -427,7 +427,6 @@ class ModuleSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            // Select con opciones en configuration
             [
                 'module_id' => $hero->id,
                 'label' => 'Alineación del contenido',
@@ -509,7 +508,6 @@ class ModuleSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            // Ejemplo de select con data_source (carga dinámica desde API)
             [
                 'module_id' => $hero->id,
                 'label' => 'Landing de destino',
@@ -529,7 +527,6 @@ class ModuleSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            // Ejemplo de select múltiple con data_source
             [
                 'module_id' => $hero->id,
                 'label' => 'Múltiples landings',
@@ -554,7 +551,7 @@ class ModuleSeeder extends Seeder
         ]);
 
         // ============================================
-        // MÓDULO FOOTER
+        // MÓDULO FOOTER (actualizado sin redes sociales externas)
         // ============================================
         $footer = Module::create([
             'name' => 'Footer',
@@ -663,42 +660,11 @@ class ModuleSeeder extends Seeder
                 'is_required' => true,
                 'order' => 7,
                 'validation_rules' => json_encode(['required', 'array']),
-                'data_source' => '/api/footer-columns',
-                'configuration' => null,
+                'data_source' => 'footer-config',
+                'configuration' => json_encode(['type' => 'builder', 'max_items' => 5]),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            [
-                'module_id' => $footer->id,
-                'label' => 'Redes sociales',
-                'name' => 'social_networks',
-                'type' => 'external',
-                'color_mode' => 'both',
-                'placeholder' => null,
-                'is_required' => false,
-                'order' => 8,
-                'validation_rules' => json_encode(['nullable', 'array']),
-                'data_source' => '/api/social-networks',
-                'configuration' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'module_id' => $footer->id,
-                'label' => 'Mostrar redes sociales',
-                'name' => 'show_social',
-                'type' => 'toggle',
-                'color_mode' => 'both',
-                'placeholder' => null,
-                'is_required' => false,
-                'order' => 9,
-                'validation_rules' => json_encode(['nullable', 'boolean']),
-                'data_source' => null,
-                'configuration' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            // Select con opciones en configuration
             [
                 'module_id' => $footer->id,
                 'label' => 'Posición de redes sociales',
@@ -780,7 +746,6 @@ class ModuleSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            // Select con opciones en configuration
             [
                 'module_id' => $footer->id,
                 'label' => 'Ancho del footer',

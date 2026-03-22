@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 interface MenuItem {
     id: number | null;
@@ -41,9 +41,9 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const [cache, setCache] = useState<CachedData>({});
     const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
 
-    const fetchMenuItems = async () => {
+    const fetchMenuItems = useCallback(async () => {
         if (loaded) return;
-        
+
         setLoadingMenuItems(true);
         try {
             const baseUrl = import.meta.env.VITE_API_URL || '';
@@ -56,7 +56,7 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
         } finally {
             setLoadingMenuItems(false);
         }
-    };
+    }, [loaded]);
 
     useEffect(() => {
         fetchMenuItems();

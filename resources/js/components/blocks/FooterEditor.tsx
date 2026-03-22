@@ -44,7 +44,13 @@ interface Props {
 const FooterEditor: React.FC<Props> = ({ value, onChange }) => {
     const { menuItems } = useAppData();
     const [columns, setColumns] = useState<Column[]>([]);
-    const isInitialized = useRef(false);
+    const [isInitialized, setIsInitialized] = useState(false);
+    const onChangeRef = useRef(onChange);
+
+    // ← AGREGA ESTO — mantiene el ref actualizado sin causar loops
+    useEffect(() => {
+        onChangeRef.current = onChange;
+    });
 
     const columnTypes: ColumnType[] = [
         { value: 'links', label: 'Enlaces' },
@@ -62,23 +68,19 @@ const FooterEditor: React.FC<Props> = ({ value, onChange }) => {
 
     // Inicializar desde value UNA SOLA VEZ
     useEffect(() => {
-        if (isInitialized.current) return;
-        
+        if (isInitialized) return;          // ← guard con estado, no ref
+
         let initialColumns: Column[] = [];
-        
         if (Array.isArray(value)) {
             initialColumns = value;
         } else if (typeof value === 'string' && value && value !== '[]') {
             try {
                 const parsed = JSON.parse(value);
-                if (Array.isArray(parsed)) {
-                    initialColumns = parsed;
-                }
+                if (Array.isArray(parsed)) initialColumns = parsed;
             } catch (e) {
                 console.error('Error parsing value:', e);
             }
         }
-        
         if (initialColumns.length === 0) {
             initialColumns = [{
                 id: Date.now().toString(),
@@ -89,17 +91,16 @@ const FooterEditor: React.FC<Props> = ({ value, onChange }) => {
                 contact: {}
             }];
         }
-        
         setColumns(initialColumns);
-        isInitialized.current = true;
-    }, [value]);
+        setIsInitialized(true);             // ← estado, no ref
+    }, [isInitialized, value]);
 
     // Notificar cambios al padre
     useEffect(() => {
-        if (isInitialized.current) {
-            onChange(columns);
+        if (isInitialized) {
+            onChangeRef.current(columns);
         }
-    }, [columns]);
+    }, [columns, isInitialized]);
 
     const addColumn = useCallback(() => {
         if (columns.length >= 5) return;
@@ -346,7 +347,7 @@ const FooterEditor: React.FC<Props> = ({ value, onChange }) => {
         );
     };
 
-    if (!isInitialized.current) {
+    if (!isInitialized) {
         return <div className="p-4 text-center">Cargando columnas...</div>;
     }
 
