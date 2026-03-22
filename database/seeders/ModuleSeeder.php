@@ -507,47 +507,7 @@ class ModuleSeeder extends Seeder
                 'configuration' => json_encode(['min' => 0, 'max' => 200, 'step' => 5, 'unit' => 'px']),
                 'created_at' => now(),
                 'updated_at' => now(),
-            ],
-            [
-                'module_id' => $hero->id,
-                'label' => 'Landing de destino',
-                'name' => 'target_landing',
-                'type' => 'select',
-                'color_mode' => 'both',
-                'placeholder' => 'Selecciona una landing',
-                'is_required' => false,
-                'order' => 26,
-                'validation_rules' => json_encode(['nullable', 'string']),
-                'data_source' => '/api/landings/options',
-                'configuration' => json_encode([
-                    'is_multiple' => false,
-                    'searchable' => true,
-                    'placeholder' => 'Busca una landing...'
-                ]),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'module_id' => $hero->id,
-                'label' => 'Múltiples landings',
-                'name' => 'multiple_landings',
-                'type' => 'select',
-                'color_mode' => 'both',
-                'placeholder' => 'Selecciona varias landings',
-                'is_required' => false,
-                'order' => 27,
-                'validation_rules' => json_encode(['nullable', 'array']),
-                'data_source' => '/api/landings/options',
-                'configuration' => json_encode([
-                    'is_multiple' => true,
-                    'searchable' => true,
-                    'max_selections' => 5,
-                    'allow_clear' => true,
-                    'placeholder' => 'Selecciona una o más opciones'
-                ]),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+            ]
         ]);
 
         // ============================================

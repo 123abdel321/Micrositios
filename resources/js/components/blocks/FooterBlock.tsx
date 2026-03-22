@@ -43,7 +43,7 @@ const FooterBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'ligh
     
     const {
         copyright_text = '© 2026 Tu Empresa. Todos los derechos reservados.',
-        columns_count = 4,
+        columns_count = 3,
         footer_columns = [],
         padding_top = 40,
         padding_bottom = 40,
