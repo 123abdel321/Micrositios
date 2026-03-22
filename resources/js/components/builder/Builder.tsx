@@ -148,7 +148,7 @@ const Builder = forwardRef<BuilderRef, Props>(({ modules, landing }, ref) => {
             <div className="hidden md:flex flex-1 h-full overflow-hidden">
 
                 {/* Panel izquierdo */}
-                <div className="w-56 lg:w-64 border-r overflow-y-auto shrink-0">
+                <div className="w-54 border-r overflow-hidden shrink-0">
                     <BlocksPanel modules={modules} onAddBlock={handleAddBlock} />
                 </div>
 
