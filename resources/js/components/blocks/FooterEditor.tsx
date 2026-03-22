@@ -41,16 +41,39 @@ interface Props {
     onChange: (value: Column[]) => void;
 }
 
+const parseInitialValue = (value: Column[] | string | null): Column[] => {
+    if (Array.isArray(value) && value.length > 0) return value;
+    if (typeof value === 'string' && value && value !== '[]') {
+        try {
+            const parsed = JSON.parse(value);
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        } catch (e) {
+            console.error('Error parsing footer value:', e);
+        }
+    }
+    return [{
+        id: Date.now().toString(),
+        type: 'links',
+        title: 'Enlaces',
+        links: [],
+        socials: [],
+        contact: {}
+    }];
+}
+
 const FooterEditor: React.FC<Props> = ({ value, onChange }) => {
     const { menuItems } = useAppData();
-    const [columns, setColumns] = useState<Column[]>([]);
-    const [isInitialized, setIsInitialized] = useState(false);
+    const [columns, setColumns] = useState<Column[]>(() => parseInitialValue(value));
     const onChangeRef = useRef(onChange);
 
     // ← AGREGA ESTO — mantiene el ref actualizado sin causar loops
     useEffect(() => {
         onChangeRef.current = onChange;
     });
+
+    useEffect(() => {
+        onChangeRef.current(columns);
+    }, [columns]);
 
     const columnTypes: ColumnType[] = [
         { value: 'links', label: 'Enlaces' },
@@ -66,41 +89,10 @@ const FooterEditor: React.FC<Props> = ({ value, onChange }) => {
         { value: 'whatsapp', label: 'WhatsApp', icon: <MessageCircle size={16} />, default_url: 'https://wa.me/' }
     ];
 
-    // Inicializar desde value UNA SOLA VEZ
-    useEffect(() => {
-        if (isInitialized) return;          // ← guard con estado, no ref
-
-        let initialColumns: Column[] = [];
-        if (Array.isArray(value)) {
-            initialColumns = value;
-        } else if (typeof value === 'string' && value && value !== '[]') {
-            try {
-                const parsed = JSON.parse(value);
-                if (Array.isArray(parsed)) initialColumns = parsed;
-            } catch (e) {
-                console.error('Error parsing value:', e);
-            }
-        }
-        if (initialColumns.length === 0) {
-            initialColumns = [{
-                id: Date.now().toString(),
-                type: 'links',
-                title: 'Enlaces',
-                links: [],
-                socials: [],
-                contact: {}
-            }];
-        }
-        setColumns(initialColumns);
-        setIsInitialized(true);             // ← estado, no ref
-    }, [isInitialized, value]);
-
     // Notificar cambios al padre
     useEffect(() => {
-        if (isInitialized) {
-            onChangeRef.current(columns);
-        }
-    }, [columns, isInitialized]);
+        onChangeRef.current(columns);
+    }, [columns]);
 
     const addColumn = useCallback(() => {
         if (columns.length >= 5) return;
@@ -346,10 +338,6 @@ const FooterEditor: React.FC<Props> = ({ value, onChange }) => {
             </div>
         );
     };
-
-    if (!isInitialized) {
-        return <div className="p-4 text-center">Cargando columnas...</div>;
-    }
 
     return (
         <div className="h-full overflow-y-auto space-y-4 custom-scrollbar">
