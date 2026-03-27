@@ -9,7 +9,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 //MODELS
-use App\Models\Clientes\Empresa;
+use App\Models\Empresa\Empresa;
 
 class User extends Authenticatable
 {
