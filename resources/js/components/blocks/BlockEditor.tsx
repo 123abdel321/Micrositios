@@ -22,8 +22,8 @@ const SelectField: React.FC<{
     value: any;
     onChange: (value: any) => void;
 }> = ({ component, value, onChange }) => {
-    // Importar useAppData
-    const { getCachedData, setCachedData, isLoading: isGlobalLoading, setIsLoading } = useAppData();
+    // 👇 AÑADIR getOrCreatePromise a la desestructuración
+    const { getCachedData, setCachedData, isLoading: isGlobalLoading, setIsLoading, getOrCreatePromise } = useAppData();
     
     const config = component.configuration as any || {};
     const options = React.useMemo(() => config.options || [], [config.options]);
@@ -49,20 +49,18 @@ const SelectField: React.FC<{
         return cached && cached.length > 0;
     });
     
-    // Cargar opciones desde data_source usando caché
+    // 👇 MODIFICAR EL useEffect COMPLETO
     useEffect(() => {
-        if (hasLoaded) return;
-        
+        // Si ya cargamos o ya tenemos opciones, salimos
+        if (hasLoaded || selectOptions.length > 0) return;
+
         const loadOptions = async () => {
             if (!component.data_source) {
                 setSelectOptions(options);
                 setHasLoaded(true);
                 return;
             }
-            
-            // Verificar si ya está cargando globalmente
-            if (isGlobalLoading(cacheKey)) return;
-            
+
             // Verificar caché nuevamente
             const cached = getCachedData(cacheKey);
             if (cached && cached.length > 0) {
@@ -70,32 +68,79 @@ const SelectField: React.FC<{
                 setHasLoaded(true);
                 return;
             }
-            
-            setIsLoading(cacheKey, true);
+
             setLoadingOptions(true);
-            
+
             try {
-                const baseUrl = import.meta.env.VITE_API_URL || '';
-                const url = `${baseUrl}${component.data_source}`;
-                const response = await fetch(url);
-                const data = await response.json();
+                // 👇 CREAR EL FETCHER QUE SERÁ COMPARTIDO
+                const fetcher = async () => {
+                    const baseUrl = import.meta.env.VITE_API_URL || '';
+                    const url = `${baseUrl}${component.data_source}`;
+                    const response = await fetch(url);
+                    
+                    if (!response.ok) {
+                        throw new Error(`Error ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    return response.json();
+                };
+
+                // 👇 USAR getOrCreatePromise EN VEZ DE FETCH DIRECTAMENTE
+                const data = await getOrCreatePromise(cacheKey, fetcher);
                 
-                // Guardar en caché
                 setCachedData(cacheKey, data);
                 setSelectOptions(data);
                 setHasLoaded(true);
             } catch (error) {
                 console.error('Error loading select options:', error);
                 setSelectOptions([]);
+                setHasLoaded(true);
             } finally {
                 setLoadingOptions(false);
-                setIsLoading(cacheKey, false);
             }
         };
-        
+
         loadOptions();
-    }, [component.data_source, options, hasLoaded, cacheKey, getCachedData, setCachedData, isGlobalLoading, setIsLoading]);
+    }, [component.data_source, options, hasLoaded, cacheKey, getCachedData, setCachedData, getOrCreatePromise, selectOptions.length]);
     
+    // 👇 MODIFICAR LA CONDICIÓN DE CARGA para incluir isGlobalLoading
+    if (loadingOptions || isGlobalLoading(cacheKey)) {
+        return (
+            <div className="flex items-center gap-2 p-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm text-muted-foreground">Cargando opciones...</span>
+            </div>
+        );
+    }
+    
+    // 👇 MODIFICAR EL BOTÓN DE REINTENTO para que funcione correctamente
+    if (selectOptions.length === 0 && hasLoaded) {
+        return (
+            <div className="text-sm text-red-500 border rounded p-2">
+                <p>Error al cargar las opciones</p>
+                <button
+                    onClick={() => {
+                        // Resetear estados para reintentar
+                        setHasLoaded(false);
+                        setSelectOptions([]);
+                        // Opcional: limpiar caché si existe
+                        // setCachedData(cacheKey, []);
+                    }}
+                    className="text-xs underline mt-1"
+                >
+                    Reintentar
+                </button>
+            </div>
+        );
+    } else if (selectOptions.length === 0) {
+        return (
+            <div className="text-sm text-muted-foreground p-2 border rounded">
+                No hay opciones disponibles
+            </div>
+        );
+    }
+    
+    // ... el resto del código (handlers y returns) se mantiene igual
     const handleSelectChange = (selectedValue: string) => {
         if (!isMultiple) {
             onChange(selectedValue);
@@ -132,23 +177,6 @@ const SelectField: React.FC<{
     const handleClearAll = () => {
         onChange([]);
     };
-    
-    if (loadingOptions) {
-        return (
-            <div className="flex items-center gap-2 p-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm text-muted-foreground">Cargando opciones...</span>
-            </div>
-        );
-    }
-    
-    if (selectOptions.length === 0) {
-        return (
-            <div className="text-sm text-muted-foreground p-2 border rounded">
-                No hay opciones disponibles
-            </div>
-        );
-    }
     
     // Select múltiple
     if (isMultiple) {
@@ -269,35 +297,42 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
         try {
             const baseUrl = import.meta.env.VITE_API_URL || '';
             const url = `${baseUrl}${component.data_source}`;
-            
+
             const response = await fetch(url);
-            
+
             if (!response.ok) {
                 throw new Error(`Error ${response.status}: ${response.statusText}`);
             }
-            
+
             const data = await response.json();
-            loadedExternalRef.current.add(fetchKey);
-            onChange(component.name, data);
             
+            // Si fue exitoso → marcar como cargado
+            loadedExternalRef.current.add(fetchKey);
+
+            onChange(component.name, data);
+
         } catch (error) {
+            
             setErrorStates(prev => ({ 
                 ...prev, 
                 [component.name]: error instanceof Error ? error.message : 'Error al cargar datos' 
             }));
+
+            loadedExternalRef.current.add(fetchKey);
+
         } finally {
             setLoadingStates(prev => ({ ...prev, [component.name]: false }));
         }
+        
     }, [block.values, onChange]);
 
     // 👈 Usar useEffect con dependencias correctas y solo ejecutar una vez
     useEffect(() => {
         let isMounted = true;
-        
+
         const loadExternalData = async () => {
-            for (const component of sortedComponents) {
+            for (const component of module.components) {
                 if (component.type === 'external' && component.data_source && isMounted) {
-                    // 👈 Solo cargar si no está en loadedExternalRef
                     const fetchKey = `${component.id}-${component.name}`;
                     if (!loadedExternalRef.current.has(fetchKey)) {
                         await fetchExternalData(component);
@@ -305,15 +340,15 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
                 }
             }
         };
-        
+
         loadExternalData();
-        
+
         return () => {
             isMounted = false;
         };
-    }, [sortedComponents, fetchExternalData]);
+    }, [module.components, fetchExternalData]);
 
-    const renderField = (component: Component) => {
+    const renderField = useCallback((component: Component) => {
         const value = block.values[component.name] ?? '';
         const isLoading = loadingStates[component.name];
         const error = errorStates[component.name];
@@ -516,7 +551,7 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
             default:
                 return null;
         }
-    };
+    }, [block.values, onChange]);
 
     return (
         <div>
@@ -527,7 +562,9 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
                             {comp.label}
                             {comp.is_required && <span className="text-red-500 ml-1">*</span>}
                         </Label>
+
                         {renderField(comp)}
+
                         {comp.validation_rules && (
                             <p className="text-xs text-muted-foreground">
                                 Reglas: {comp.validation_rules.join(', ')}

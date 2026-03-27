@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 
 interface MenuItem {
     id: number | null;
@@ -20,6 +20,7 @@ interface AppDataContextType {
     setCachedData: (key: string, data: any[]) => void;
     isLoading: (key: string) => boolean;
     setIsLoading: (key: string, loading: boolean) => void;
+    getOrCreatePromise: <T>(key: string, fetcher: () => Promise<T>) => Promise<T>;
 }
 
 const AppDataContext = createContext<AppDataContextType | undefined>(undefined);
@@ -36,6 +37,7 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
     const [loadingMenuItems, setLoadingMenuItems] = useState(false);
     const [loaded, setLoaded] = useState(false);
+    const activePromisesRef = useRef<Map<string, Promise<any>>>(new Map());
     
     // Cache para otros endpoints
     const [cache, setCache] = useState<CachedData>({});
@@ -45,17 +47,7 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (loaded) return;
 
         setLoadingMenuItems(true);
-        // try {
-        //     const baseUrl = import.meta.env.VITE_API_URL || '';
-        //     const response = await fetch(`${baseUrl}menu-items`);
-        //     const data = await response.json();
-        //     setMenuItems(data);
-        //     setLoaded(true);
-        // } catch (error) {
-        //     console.error('Error loading menu items:', error);
-        // } finally {
-        //     setLoadingMenuItems(false);
-        // }
+        
     }, [loaded]);
 
     useEffect(() => {
@@ -83,6 +75,23 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setLoadingStates(prev => ({ ...prev, [key]: loading }));
     };
 
+    const getOrCreatePromise = useCallback(<T,>(key: string, fetcher: () => Promise<T>): Promise<T> => {
+        const existingPromise = activePromisesRef.current.get(key);
+        if (existingPromise) {
+            return existingPromise;
+        }
+
+        const promise = fetcher()
+            .finally(() => {
+                activePromisesRef.current.delete(key);
+                setIsLoading(key, false); // limpiar loading state global
+            });
+
+        activePromisesRef.current.set(key, promise);
+        setIsLoading(key, true);
+        return promise;
+    }, [setIsLoading]);
+
     return (
         <AppDataContext.Provider value={{ 
             menuItems, 
@@ -91,7 +100,9 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
             getCachedData,
             setCachedData,
             isLoading,
-            setIsLoading
+            setIsLoading,
+            getOrCreatePromise
+
         }}>
             {children}
         </AppDataContext.Provider>
