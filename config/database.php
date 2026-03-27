@@ -32,6 +32,48 @@ return [
 
     'connections' => [
 
+        'clientes' => [
+            'driver' => 'mysql',
+            'url' => env('CLIENTES_DB_URL'),
+            'host' => env('CLIENTES_DB_HOST', '127.0.0.1'),
+            'port' => env('CLIENTES_DB_PORT', '3306'),
+            'database' => env('CLIENTES_DB_DATABASE', 'forge'),
+            'username' => env('CLIENTES_DB_USERNAME', 'forge'),
+            'password' => env('CLIENTES_DB_PASSWORD', ''),
+            'unix_socket' => env('CLIENTES_DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => false,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                PDO::ATTR_TIMEOUT => 120,
+            ]) : [],
+		],
+
+        'microsite' => [
+            'driver' => 'mysql',
+            'url' => env('MICROSITE_DATABASE_URL'),
+            'host' => env('MICROSITE_DB_HOST', '127.0.0.1'),
+            'port' => env('MICROSITE_DB_PORT', '3306'),
+            'database' => env('MICROSITE_DB_DATABASE', 'forge'),
+            'username' => env('MICROSITE_DB_USERNAME', 'forge'),
+            'password' => env('MICROSITE_DB_PASSWORD', ''),
+            'unix_socket' => env('MICROSITE_DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => false,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                PDO::ATTR_TIMEOUT => 120,
+            ]) : [],
+		],
+
         'sqlite' => [
             'driver' => 'sqlite',
             'url' => env('DB_URL'),

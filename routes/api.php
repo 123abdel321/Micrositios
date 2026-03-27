@@ -14,18 +14,19 @@ use App\Http\Controllers\Api\SocialNetworksController;
 // ============================================
 
 Route::middleware(['auth:sanctum'])->group(function () {
+    
     Route::get('/landings/options', [SelectOptionsController::class, 'getLandings']);
     Route::get('/select-options/{type}', [SelectOptionsController::class, 'getOptions']);
+
+    // HeaderBlock Menu Items
+    Route::get('/menu-items', [MenuItemsController::class, 'index']);
+    Route::get('/menu-items/{landingId}', [MenuItemsController::class, 'getForLanding']);
+    
+    // Footer Config
+    Route::get('/footer-config', [FooterConfigController::class, 'index']);
+    Route::get('/footer-config/{landingId}', [FooterConfigController::class, 'getForLanding']);
+    
+    // Opciones
+    Route::get('/column-types', [OptionsController::class, 'getColumnTypes']);
+    Route::get('/social-platforms', [OptionsController::class, 'getSocialPlatforms']);
 });
-
-// HeaderBlock Menu Items
-Route::get('/menu-items', [MenuItemsController::class, 'index']);
-Route::get('/menu-items/{landingId}', [MenuItemsController::class, 'getForLanding']);
-
-// Footer Config
-Route::get('/footer-config', [FooterConfigController::class, 'index']);
-Route::get('/footer-config/{landingId}', [FooterConfigController::class, 'getForLanding']);
-
-// Opciones
-Route::get('/column-types', [OptionsController::class, 'getColumnTypes']);
-Route::get('/social-platforms', [OptionsController::class, 'getSocialPlatforms']);

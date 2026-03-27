@@ -45,17 +45,17 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (loaded) return;
 
         setLoadingMenuItems(true);
-        try {
-            const baseUrl = import.meta.env.VITE_API_URL || '';
-            const response = await fetch(`${baseUrl}menu-items`);
-            const data = await response.json();
-            setMenuItems(data);
-            setLoaded(true);
-        } catch (error) {
-            console.error('Error loading menu items:', error);
-        } finally {
-            setLoadingMenuItems(false);
-        }
+        // try {
+        //     const baseUrl = import.meta.env.VITE_API_URL || '';
+        //     const response = await fetch(`${baseUrl}menu-items`);
+        //     const data = await response.json();
+        //     setMenuItems(data);
+        //     setLoaded(true);
+        // } catch (error) {
+        //     console.error('Error loading menu items:', error);
+        // } finally {
+        //     setLoadingMenuItems(false);
+        // }
     }, [loaded]);
 
     useEffect(() => {

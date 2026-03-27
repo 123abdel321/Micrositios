@@ -7,11 +7,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 //MODELS
-use App\Models\Module;
-use App\Models\Landing;
-use App\Models\Component;
-use App\Models\Submission;
-use App\Models\FieldValue;
+use App\Models\Sistema\Module;
+use App\Models\Sistema\Landing;
+use App\Models\Sistema\Component;
+use App\Models\Sistema\Submission;
+use App\Models\Sistema\FieldValue;
 
 class LandingController extends Controller
 {
@@ -33,7 +33,7 @@ class LandingController extends Controller
             ])->validate();
 
             // 3. Iniciar la transacción
-            DB::beginTransaction();
+            DB::connection('microsite')->beginTransaction();
 
             // Eliminar bloques anteriores
             $landing->blocks()->delete();
@@ -62,7 +62,7 @@ class LandingController extends Controller
             }
 
             // 4. Si todo salió bien, confirmamos los cambios
-            DB::commit();
+            DB::connection('microsite')->commit();
 
             return redirect()->back()->with('success', 'Landing guardada correctamente.');
 
@@ -72,7 +72,7 @@ class LandingController extends Controller
 
         } catch (\Exception $e) {
             // 5. Algo salió mal: deshacemos todo y registramos el error
-            DB::rollBack();
+            DB::connection('microsite')->rollBack();
             
             Log::error("Error al guardar la landing {$landing->id}: " . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
@@ -111,7 +111,7 @@ class LandingController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'slug' => 'required|string|unique:landings',
+            'slug' => 'required|string|unique:microsite.landings,slug',
         ]);
 
         $landing = Landing::create([
@@ -134,27 +134,37 @@ class LandingController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Landing $landing)
+    public function edit(string $id)
     {
-        $landing->load('blocks.fieldValues.component', 'blocks.module');
-        
-        $blocks = $landing->blocks->map(function ($submission) {
-            $values = [];
-            foreach ($submission->fieldValues as $fv) {
-                $values[$fv->component->name] = $this->processValueForDisplay($fv->component, $fv->value);
-            }
-            $submission->setAttribute('values', $values);
-            $submission->setAttribute('module_slug', $submission->module->slug);
-            return $submission;
-        });
+        try {
 
-        $modules = Module::with('components')->get();
+            $landing = Landing::findOrFail($id);
+            $landing->load('blocks.fieldValues.component', 'blocks.module');
+            
+            $blocks = $landing->blocks->map(function ($submission) {
+                $values = [];
+                foreach ($submission->fieldValues as $fv) {
+                    $values[$fv->component->name] = $this->processValueForDisplay($fv->component, $fv->value);
+                }
+                $submission->setAttribute('values', $values);
+                $submission->setAttribute('module_slug', $submission->module->slug);
+                return $submission;
+            });
 
-        return inertia('builder/edit', [
-            'landing' => $landing,
-            'modules' => $modules,
-            'blocks' => $blocks,
-        ]);
+            $modules = Module::with('components')->get();
+
+            return inertia('builder/edit', [
+                'landing' => $landing,
+                'modules' => $modules,
+                'blocks' => $blocks,
+            ]);
+
+        } catch (\Exception $e) {
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Ocurrió un problema técnico al guardar los datos.');
+        }
     }
 
     /**
@@ -162,14 +172,33 @@ class LandingController extends Controller
      */
     public function update(Request $request, Landing $landing)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => 'required|string|unique:landings,slug,' . $landing->id,
-        ]);
+        try {
 
-        $landing->update($request->only('name', 'slug'));
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'slug' => 'required|string|unique:microsite.landings,slug,' . $landing->id,
+            ]);
 
-        return redirect()->back();
+            DB::connection('microsite')->beginTransaction();
+
+            $landing->update($request->only('name', 'slug'));
+
+            DB::connection('microsite')->commit();
+
+            return redirect()->back();
+            
+        } catch (ValidationException $e) {
+            
+            throw $e; 
+
+        } catch (\Exception $e) {
+
+            DB::connection('microsite')->rollBack();
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Ocurrió un problema técnico al guardar los datos.');
+        }
     }
 
     /**

@@ -1,13 +1,21 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Sistema;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Module extends Model
 {
-    protected $fillable = ['name', 'description', 'slug'];
+    protected $connection = 'microsite';
+
+    protected $table = 'modules';
+
+    protected $fillable = [
+        'name',
+        'description',
+        'slug'
+    ];
 
     public function components(): HasMany
     {

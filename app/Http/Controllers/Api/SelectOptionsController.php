@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Landing;
 use Illuminate\Http\Request;
+//MODELS
+use App\Models\Sistema\Landing;
 
 class SelectOptionsController extends Controller
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Sistema;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -8,9 +8,21 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Component extends Model
 {
+    protected $connection = 'microsite';
+
+    protected $table = 'components';
+
     protected $fillable = [
-        'module_id', 'label', 'name', 'type', 'placeholder',
-        'is_required', 'order', 'validation_rules', 'data_source', 'configuration'
+        'module_id',
+        'label',
+        'name',
+        'type',
+        'placeholder',
+        'is_required',
+        'order',
+        'validation_rules',
+        'data_source',
+        'configuration'
     ];
 
     protected $casts = [

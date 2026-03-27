@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 //MODELS
-use App\Models\Module;
-use App\Models\Landing;
-use App\Models\Submission;
-use App\Models\FieldValue;
+use App\Models\Sistema\Module;
+use App\Models\Sistema\Landing;
+use App\Models\Sistema\Submission;
+use App\Models\Sistema\FieldValue;
 
 class BlockController extends Controller
 {

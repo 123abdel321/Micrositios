@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Sistema;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -8,7 +8,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Submission extends Model
 {
-    protected $fillable = ['module_id', 'user_id'];
+    protected $connection = 'microsite';
+
+    protected $table = 'submissions';
+
+    protected $fillable = [
+        'module_id',
+        'user_id'
+    ];
 
     public function module(): BelongsTo
     {

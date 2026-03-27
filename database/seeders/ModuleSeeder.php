@@ -3,8 +3,9 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Module;
-use App\Models\Component;
+use App\Models\Sistema\Module;
+use App\Models\Sistema\Component;
+
 
 class ModuleSeeder extends Seeder
 {

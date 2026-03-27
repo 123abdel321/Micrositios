@@ -1,13 +1,22 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Sistema;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ComponentOption extends Model
 {
-    protected $fillable = ['component_id', 'label', 'value', 'order'];
+    protected $connection = 'microsite';
+
+    protected $table = 'component_options';
+
+    protected $fillable = [
+        'component_id',
+        'label',
+        'value',
+        'order'
+    ];
 
     public function component(): BelongsTo
     {
