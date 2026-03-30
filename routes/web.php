@@ -3,9 +3,16 @@
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 //CONTROLLERS
-use App\Http\Controllers\LandingController;
 use App\Http\Controllers\BlockController;
+use App\Http\Controllers\LandingController;
 use App\Http\Controllers\EmpresaController;
+
+use App\Http\Controllers\Api\OptionsController;
+use App\Http\Controllers\Api\MenuItemsController;
+use App\Http\Controllers\Api\FooterConfigController;
+use App\Http\Controllers\Api\SelectOptionsController;
+use App\Http\Controllers\Api\FooterColumnsController;
+use App\Http\Controllers\Api\SocialNetworksController;
 
 Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
@@ -37,12 +44,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/builder/{landing}/edit', 'edit')->name('builder.edit');
             Route::put('/builder/{landing}', 'update')->name('builder.update');
             Route::delete('/builder/{landing}', 'destroy')->name('builder.destroy');
+            Route::post('/builder/{landing}/save', 'save')->name('builder.save');
         });
     
         // Bloques de una landing
         Route::controller(BlockController::class)->group(function () {
             Route::post('/builder/{landing}/blocks', 'store')->name('blocks.store');
-            Route::post('/builder/{landing}/save', [LandingController::class, 'save'])->name('builder.save');
             Route::put('/builder/{landing}/blocks/{block}', 'update')->name('blocks.update');
             Route::delete('/builder/{landing}/blocks/{block}', 'destroy')->name('blocks.destroy');
             // Reordenar bloques
@@ -51,6 +58,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });    
 
 
+});
+
+// ✅ Agregar las API routes con prefijo /api/
+Route::middleware(['auth', 'verified', 'client_connection'])->prefix('api')->group(function () {
+    
+    Route::get('/landings/options', [SelectOptionsController::class, 'getLandings']);
+    Route::get('/select-options/{type}', [SelectOptionsController::class, 'getOptions']);
+    Route::get('/menu-items', [MenuItemsController::class, 'index']);
+    Route::get('/menu-items/{landingId}', [MenuItemsController::class, 'getForLanding']);
+    Route::get('/footer-config', [FooterConfigController::class, 'index']);
+    Route::get('/footer-config/{landingId}', [FooterConfigController::class, 'getForLanding']);
+    Route::get('/column-types', [OptionsController::class, 'getColumnTypes']);
+    Route::get('/social-platforms', [OptionsController::class, 'getSocialPlatforms']);
 });
 
 require __DIR__.'/settings.php';

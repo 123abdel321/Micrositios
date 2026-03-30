@@ -8,6 +8,7 @@ import { CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { useAppData } from '@/contexts/AppDataContext';
 import FooterEditor from '@/components/blocks/FooterEditor';
+import apiClient from '@/utils/api';
 
 interface Props {
     block: Block;
@@ -72,28 +73,24 @@ const SelectField: React.FC<{
             setLoadingOptions(true);
 
             try {
-                // 👇 CREAR EL FETCHER QUE SERÁ COMPARTIDO
                 const fetcher = async () => {
-                    const baseUrl = import.meta.env.VITE_API_URL || '';
-                    const url = `${baseUrl}${component.data_source}`;
-                    const response = await fetch(url);
-                    
-                    if (!response.ok) {
-                        throw new Error(`Error ${response.status}: ${response.statusText}`);
-                    }
-                    
-                    return response.json();
+                    // axios lanza error automáticamente si status >= 400
+                    const response = await apiClient.get(component.data_source ?? '');
+                    return response.data; // ✅ axios devuelve datos en .data
                 };
 
-                // 👇 USAR getOrCreatePromise EN VEZ DE FETCH DIRECTAMENTE
                 const data = await getOrCreatePromise(cacheKey, fetcher);
                 
                 setCachedData(cacheKey, data);
                 setSelectOptions(data);
                 setHasLoaded(true);
+                
             } catch (error) {
                 console.error('Error loading select options:', error);
-                setSelectOptions([]);
+                // axios coloca el error en error.response.status
+                if (error instanceof Error) {
+                    setSelectOptions([]);
+                }
                 setHasLoaded(true);
             } finally {
                 setLoadingOptions(false);

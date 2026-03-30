@@ -15,22 +15,25 @@ use App\Models\Sistema\FieldValue;
 
 class LandingController extends Controller
 {
-    public function save(Request $request, Landing $landing)
+    public function save(Request $request, $id)
     {
-        // 1. Decodificar antes de validar para que las reglas de Laravel funcionen
-        $data = $request->all();
-        if (isset($data['blocks']) && is_string($data['blocks'])) {
-            $data['blocks'] = json_decode($data['blocks'], true);
-        }
-
         try {
-            // 2. Validar (Si falla, Laravel lanza automáticamente una ValidationException)
+            $data = $request->all();
+
+            // 1. Validar (Si falla, Laravel lanza automáticamente una ValidationException)
             $validated = validator($data, [
                 'blocks' => 'required|array',
-                'blocks.*.module_id' => 'required|exists:modules,id',
+                'blocks.*.module_id' => 'required|exists:microsite.modules,id',
                 'blocks.*.values' => 'required|array',
                 'blocks.*.order' => 'integer',
             ])->validate();
+            
+            $landing = Landing::where('id', $id)->where('user_id', auth()->id())->firstOrFail();
+
+            // 2. Decodificar antes de validar para que las reglas de Laravel funcionen
+            if (isset($data['blocks']) && is_string($data['blocks'])) {
+                $data['blocks'] = json_decode($data['blocks'], true);
+            }
 
             // 3. Iniciar la transacción
             DB::connection('microsite')->beginTransaction();
@@ -67,10 +70,12 @@ class LandingController extends Controller
             return redirect()->back()->with('success', 'Landing guardada correctamente.');
 
         } catch (ValidationException $e) {
+            dd($e->getMessage());
             // No hacemos Rollback aquí porque la validación falla ANTES de tocar la DB
             throw $e; 
 
         } catch (\Exception $e) {
+            dd($e->getMessage());
             // 5. Algo salió mal: deshacemos todo y registramos el error
             DB::connection('microsite')->rollBack();
             

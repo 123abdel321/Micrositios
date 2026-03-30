@@ -1,5 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 import { useState, useRef } from 'react';
+import type { FormDataConvertible } from '@inertiajs/core';
 import AppLayout from '@/layouts/app-layout';
 import Builder, { BuilderRef } from '@/components/builder/Builder';
 import { Button } from '@/components/ui/button';
@@ -25,11 +26,14 @@ export default function Edit({ modules, landing }: Props) {
     const handleSave = async () => {
         // Obtener los bloques actuales desde el componente Builder
         const blocks = builderRef.current?.getBlocks() || [];
+        const payload: Record<string, FormDataConvertible> = {
+            blocks: blocks as unknown as FormDataConvertible,
+        };
         
         setIsSaving(true);
         router.post(
             `/builder/${landing.id}/save`,
-            { blocks: JSON.stringify(blocks) },
+            payload,
             {
                 onSuccess: () => {
                     toast.success('Landing guardada correctamente');

@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import apiClient from '@/utils/api';
 
 interface MenuItem {
     id: number | null;
@@ -43,16 +44,26 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const [cache, setCache] = useState<CachedData>({});
     const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
 
-    const fetchMenuItems = useCallback(async () => {
+    const fetchMenuItems = async () => {
         if (loaded) return;
-
-        setLoadingMenuItems(true);
         
-    }, [loaded]);
+        setLoadingMenuItems(true);
+        try {
+            const baseUrl = import.meta.env.VITE_API_URL || '';
+            const response = await apiClient.get(`${baseUrl}menu-items`);
+
+            setMenuItems(response.data);
+            setLoaded(true);
+        } catch (error) {
+            console.error('Error loading menu items:', error);
+        } finally {
+            setLoadingMenuItems(false);
+        }
+    };
 
     useEffect(() => {
         fetchMenuItems();
-    }, [fetchMenuItems]);
+    }, []);
 
     const refreshMenuItems = async () => {
         setLoaded(false);
