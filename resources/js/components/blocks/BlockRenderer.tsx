@@ -4,6 +4,7 @@ import { useAppearance } from '@/hooks/use-appearance';
 import { Block } from '@/types/builder';
 import HeaderBlock from '@/components/blocks/HeaderBlock';
 import HeroBlock from '@/components/blocks/HeroBlock';
+import HeroSplitBlock from '@/components/blocks/HeroSplitBlock';
 import FooterBlock from '@/components/blocks/FooterBlock';
 
 interface Props {
@@ -30,6 +31,14 @@ const BlockRenderer: React.FC<Props> = ({ block, isPreview = false }) => {
         case 'hero':
             return (
                 <HeroBlock
+                    values={block.values}
+                    isPreview={isPreview}
+                    theme={effectiveTheme}
+                />
+            );
+        case 'hero-split':
+            return (
+                <HeroSplitBlock
                     values={block.values}
                     isPreview={isPreview}
                     theme={effectiveTheme}

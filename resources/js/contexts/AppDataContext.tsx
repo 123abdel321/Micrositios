@@ -38,15 +38,14 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
     const [loadingMenuItems, setLoadingMenuItems] = useState(false);
     const [loaded, setLoaded] = useState(false);
-    const activePromisesRef = useRef<Map<string, Promise<any>>>(new Map());
-    
+
     // Cache para otros endpoints
     const [cache, setCache] = useState<CachedData>({});
     const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
 
     const fetchMenuItems = async () => {
         if (loaded) return;
-        
+
         setLoadingMenuItems(true);
         try {
             const baseUrl = import.meta.env.VITE_API_URL || '';
@@ -69,19 +68,19 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setLoaded(false);
         await fetchMenuItems();
     };
-    
+
     const getCachedData = (key: string) => {
         return cache[key] || null;
     };
-    
+
     const setCachedData = (key: string, data: any[]) => {
         setCache(prev => ({ ...prev, [key]: data }));
     };
-    
+
     const isLoading = (key: string) => {
         return loadingStates[key] || false;
     };
-    
+
     const setIsLoading = (key: string, loading: boolean) => {
         setLoadingStates(prev => ({ ...prev, [key]: loading }));
     };
@@ -104,9 +103,9 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }, [setIsLoading]);
 
     return (
-        <AppDataContext.Provider value={{ 
-            menuItems, 
-            loadingMenuItems, 
+        <AppDataContext.Provider value={{
+            menuItems,
+            loadingMenuItems,
             refreshMenuItems,
             getCachedData,
             setCachedData,
