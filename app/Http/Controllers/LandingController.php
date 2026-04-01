@@ -27,7 +27,7 @@ class LandingController extends Controller
                 'blocks.*.values' => 'required|array',
                 'blocks.*.order' => 'integer',
             ])->validate();
-            
+
             $landing = Landing::where('id', $id)->where('user_id', auth()->id())->firstOrFail();
 
             // 2. Decodificar antes de validar para que las reglas de Laravel funcionen
@@ -54,7 +54,7 @@ class LandingController extends Controller
 
                     if ($component) {
                         $storedValue = $this->processValueForStorage($component, $value);
-                        
+
                         FieldValue::create([
                             'submission_id' => $submission->id,
                             'component_id' => $component->id,
@@ -72,13 +72,13 @@ class LandingController extends Controller
         } catch (ValidationException $e) {
             dd($e->getMessage());
             // No hacemos Rollback aquí porque la validación falla ANTES de tocar la DB
-            throw $e; 
+            throw $e;
 
         } catch (\Exception $e) {
             dd($e->getMessage());
             // 5. Algo salió mal: deshacemos todo y registramos el error
-            DB::connection('microsite')->rollBack();
-            
+            DB::rollBack();
+
             Log::error("Error al guardar la landing {$landing->id}: " . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'data' => $data
@@ -141,20 +141,17 @@ class LandingController extends Controller
      */
     public function edit(string $id)
     {
-        try {
+        $landing->load('blocks.fieldValues.component', 'blocks.module');
 
-            $landing = Landing::findOrFail($id);
-            $landing->load('blocks.fieldValues.component', 'blocks.module');
-            
-            $blocks = $landing->blocks->map(function ($submission) {
-                $values = [];
-                foreach ($submission->fieldValues as $fv) {
-                    $values[$fv->component->name] = $this->processValueForDisplay($fv->component, $fv->value);
-                }
-                $submission->setAttribute('values', $values);
-                $submission->setAttribute('module_slug', $submission->module->slug);
-                return $submission;
-            });
+        $blocks = $landing->blocks->map(function ($submission) {
+            $values = [];
+            foreach ($submission->fieldValues as $fv) {
+                $values[$fv->component->name] = $this->processValueForDisplay($fv->component, $fv->value);
+            }
+            $submission->setAttribute('values', $values);
+            $submission->setAttribute('module_slug', $submission->module->slug);
+            return $submission;
+        });
 
             $modules = Module::with('components')->get();
 
@@ -191,10 +188,10 @@ class LandingController extends Controller
             DB::connection('microsite')->commit();
 
             return redirect()->back();
-            
+
         } catch (ValidationException $e) {
-            
-            throw $e; 
+
+            throw $e;
 
         } catch (\Exception $e) {
 
@@ -223,12 +220,12 @@ class LandingController extends Controller
         if ($value === null || $value === '') {
             return null;
         }
-        
+
         // Para selects, verificar si es múltiple
         if ($component->type === 'select') {
             $config = $component->configuration ?? [];
             $isMultiple = $config['is_multiple'] ?? false;
-            
+
             if ($isMultiple) {
                 // Asegurar que es un array
                 if (is_array($value)) {
@@ -240,37 +237,37 @@ class LandingController extends Controller
                         }
                         return $item;
                     }, $value);
-                    
+
                     // Filtrar valores vacíos
                     $filtered = array_filter($ids, function($v) {
                         return $v !== null && $v !== '' && $v !== 'undefined';
                     });
-                    
+
                     return json_encode(array_values($filtered));
                 }
                 return json_encode([]);
             }
-            
+
             // Select simple
             if (is_string($value) && strpos($value, ' - ') !== false) {
                 return explode(' - ', $value)[0];
             }
-            
+
             if ($value === 'undefined' || $value === '') {
                 return null;
             }
             return $value;
         }
-        
+
         // Para arrays en general
         if (is_array($value)) {
             return json_encode($value);
         }
-        
+
         // Para valores simples
         return $value;
     }
-    
+
     /**
      * Procesa el valor para mostrarlo según el tipo de componente
      */
@@ -279,12 +276,12 @@ class LandingController extends Controller
         if ($value === null || $value === '') {
             return null;
         }
-        
+
         // Para selects, verificar si es múltiple
         if ($component->type === 'select') {
             $config = $component->configuration ?? [];
             $isMultiple = $config['is_multiple'] ?? false;
-            
+
             if ($isMultiple) {
                 $decoded = json_decode($value, true);
                 if (is_array($decoded)) {
@@ -295,20 +292,20 @@ class LandingController extends Controller
                 }
                 return [];
             }
-            
+
             // Select simple
             if ($value === 'undefined') {
                 return null;
             }
             return $value;
         }
-        
+
         // Para external
         if ($component->type === 'external') {
             $decoded = json_decode($value, true);
             return is_array($decoded) ? $decoded : $value;
         }
-        
+
         return $value;
     }
 }

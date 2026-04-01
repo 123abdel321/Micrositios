@@ -39,7 +39,7 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const [loadingMenuItems, setLoadingMenuItems] = useState(false);
     const [loaded, setLoaded] = useState(false);
     const activePromisesRef = useRef<Map<string, Promise<any>>>(new Map());
-    
+
     // Cache para otros endpoints
     const [cache, setCache] = useState<CachedData>({});
     const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
@@ -72,11 +72,11 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const getCachedData = (key: string) => {
         return cache[key] || null;
     };
-    
+
     const setCachedData = (key: string, data: any[]) => {
         setCache(prev => ({ ...prev, [key]: data }));
     };
-    
+
     const isLoading = (key: string) => {
         return loadingStates[key] || false;
     };
@@ -103,9 +103,9 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }, [setIsLoading]);
 
     return (
-        <AppDataContext.Provider value={{ 
-            menuItems, 
-            loadingMenuItems, 
+        <AppDataContext.Provider value={{
+            menuItems,
+            loadingMenuItems,
             refreshMenuItems,
             getCachedData,
             setCachedData,
