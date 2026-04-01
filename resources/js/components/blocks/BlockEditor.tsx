@@ -24,7 +24,7 @@ const SelectField: React.FC<{
     onChange: (value: any) => void;
 }> = ({ component, value, onChange }) => {
     // 👇 AÑADIR getOrCreatePromise a la desestructuración
-    const { getCachedData, setCachedData, isLoading: isGlobalLoading, setIsLoading, getOrCreatePromise } = useAppData();
+    const { getCachedData, setCachedData, isLoading: isGlobalLoading, getOrCreatePromise } = useAppData();
     
     const config = component.configuration as any || {};
     const options = React.useMemo(() => config.options || [], [config.options]);
@@ -548,7 +548,7 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
             default:
                 return null;
         }
-    }, [block.values, onChange]);
+    }, [block.values, loadingStates, errorStates, onChange, fetchExternalData]);
 
     return (
         <div>

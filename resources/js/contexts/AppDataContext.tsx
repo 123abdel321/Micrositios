@@ -44,8 +44,8 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const [cache, setCache] = useState<CachedData>({});
     const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
 
-    const fetchMenuItems = async () => {
-        if (loaded) return;
+    const fetchMenuItems = useCallback(async (force = false) => {
+        if (loaded && !force) return;
         
         setLoadingMenuItems(true);
         try {
@@ -59,16 +59,15 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
         } finally {
             setLoadingMenuItems(false);
         }
-    };
+    }, [loaded]);
 
     useEffect(() => {
         fetchMenuItems();
-    }, []);
+    }, [fetchMenuItems]);
 
-    const refreshMenuItems = async () => {
-        setLoaded(false);
-        await fetchMenuItems();
-    };
+    const refreshMenuItems = useCallback(async () => {
+        await fetchMenuItems(true);
+    }, [fetchMenuItems]);
     
     const getCachedData = (key: string) => {
         return cache[key] || null;
@@ -82,9 +81,9 @@ export const AppDataProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return loadingStates[key] || false;
     };
     
-    const setIsLoading = (key: string, loading: boolean) => {
+    const setIsLoading = useCallback((key: string, loading: boolean) => {
         setLoadingStates(prev => ({ ...prev, [key]: loading }));
-    };
+    }, []);
 
     const getOrCreatePromise = useCallback(<T,>(key: string, fetcher: () => Promise<T>): Promise<T> => {
         const existingPromise = activePromisesRef.current.get(key);

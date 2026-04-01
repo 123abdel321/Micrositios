@@ -3,7 +3,6 @@ import { ArrowLeft, Edit, Building2, Mail, Phone, MapPin, Database } from 'lucid
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { route } from 'ziggy-js';
 import { format } from 'date-fns';
