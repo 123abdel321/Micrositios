@@ -26,7 +26,9 @@ const HeaderBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'ligh
         color: textColor || (theme === 'dark' ? '#ffffff' : '#000000'),
         height: typeof header_height === 'number' ? `${header_height}px` : `${parseInt(header_height)}px`,
         transition: 'all 0.3s ease',
-        position: 'relative',
+        position: 'sticky',
+        top: 0,
+        zIndex: 40,
     };
 
     // Procesar menu_items: puede ser string, array, o JSON

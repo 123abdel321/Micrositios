@@ -45,6 +45,8 @@ export interface Landing {
     id: number;
     name: string;
     slug: string;
+    is_active: boolean;
+    is_principal: boolean;
     user_id: number;
     blocks: Block[];
     created_at: string;

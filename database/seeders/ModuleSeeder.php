@@ -6,7 +6,6 @@ use Illuminate\Database\Seeder;
 use App\Models\Sistema\Module;
 use App\Models\Sistema\Component;
 
-
 class ModuleSeeder extends Seeder
 {
     public function run(): void
@@ -740,7 +739,7 @@ class ModuleSeeder extends Seeder
         ]);
 
         Component::insert([
-            // ── Contenido ──────────────────────────────────────────────
+            // Contenido
             [
                 'module_id' => $heroSplit->id,
                 'label' => 'Título principal',
@@ -772,7 +771,7 @@ class ModuleSeeder extends Seeder
                 'updated_at' => now(),
             ],
 
-            // ── Imagen ─────────────────────────────────────────────────
+            // Imagen
             [
                 'module_id' => $heroSplit->id,
                 'label' => 'Imagen',
@@ -805,13 +804,33 @@ class ModuleSeeder extends Seeder
             ],
             [
                 'module_id' => $heroSplit->id,
+                'label' => 'Posición de la imagen',
+                'name' => 'image_position',
+                'type' => 'select',
+                'color_mode' => 'both',
+                'placeholder' => 'right',
+                'is_required' => false,
+                'order' => 5,
+                'validation_rules' => json_encode(['nullable', 'string']),
+                'data_source' => null,
+                'configuration' => json_encode([
+                    'options' => [
+                        ['value' => 'left', 'label' => 'Izquierda'],
+                        ['value' => 'right', 'label' => 'Derecha'],
+                    ]
+                ]),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'module_id' => $heroSplit->id,
                 'label' => 'Ajuste de la imagen',
                 'name' => 'image_fit',
                 'type' => 'select',
                 'color_mode' => 'both',
                 'placeholder' => 'cover',
                 'is_required' => false,
-                'order' => 5,
+                'order' => 6,
                 'validation_rules' => json_encode(['nullable', 'string']),
                 'data_source' => null,
                 'configuration' => json_encode([
@@ -833,7 +852,7 @@ class ModuleSeeder extends Seeder
                 'color_mode' => 'both',
                 'placeholder' => '12',
                 'is_required' => false,
-                'order' => 6,
+                'order' => 7,
                 'validation_rules' => json_encode(['nullable', 'numeric']),
                 'data_source' => null,
                 'configuration' => json_encode(['min' => 0, 'max' => 48, 'step' => 2, 'unit' => 'px']),
@@ -848,7 +867,7 @@ class ModuleSeeder extends Seeder
                 'color_mode' => 'both',
                 'placeholder' => '50',
                 'is_required' => false,
-                'order' => 7,
+                'order' => 8,
                 'validation_rules' => json_encode(['nullable', 'numeric']),
                 'data_source' => null,
                 'configuration' => json_encode(['min' => 30, 'max' => 70, 'step' => 5, 'unit' => '%']),
@@ -856,7 +875,7 @@ class ModuleSeeder extends Seeder
                 'updated_at' => now(),
             ],
 
-            // ── Botón ──────────────────────────────────────────────────
+            // Botón
             [
                 'module_id' => $heroSplit->id,
                 'label' => 'Texto del botón',
@@ -865,7 +884,7 @@ class ModuleSeeder extends Seeder
                 'color_mode' => 'both',
                 'placeholder' => 'Llamada a la acción',
                 'is_required' => false,
-                'order' => 8,
+                'order' => 9,
                 'validation_rules' => json_encode(['nullable', 'string', 'max:50']),
                 'data_source' => null,
                 'configuration' => null,
@@ -880,7 +899,7 @@ class ModuleSeeder extends Seeder
                 'color_mode' => 'both',
                 'placeholder' => 'https://ejemplo.com',
                 'is_required' => false,
-                'order' => 9,
+                'order' => 10,
                 'validation_rules' => json_encode(['nullable', 'url']),
                 'data_source' => null,
                 'configuration' => null,
@@ -895,7 +914,7 @@ class ModuleSeeder extends Seeder
                 'color_mode' => 'both',
                 'placeholder' => null,
                 'is_required' => false,
-                'order' => 10,
+                'order' => 11,
                 'validation_rules' => json_encode(['nullable', 'string']),
                 'data_source' => null,
                 'configuration' => json_encode([
@@ -909,7 +928,7 @@ class ModuleSeeder extends Seeder
                 'updated_at' => now(),
             ],
 
-            // ── Layout ─────────────────────────────────────────────────
+            // Layout
             [
                 'module_id' => $heroSplit->id,
                 'label' => 'Alineación vertical del contenido',
@@ -918,7 +937,7 @@ class ModuleSeeder extends Seeder
                 'color_mode' => 'both',
                 'placeholder' => 'center',
                 'is_required' => false,
-                'order' => 11,
+                'order' => 12,
                 'validation_rules' => json_encode(['nullable', 'string']),
                 'data_source' => null,
                 'configuration' => json_encode([
@@ -939,7 +958,7 @@ class ModuleSeeder extends Seeder
                 'color_mode' => 'both',
                 'placeholder' => '48',
                 'is_required' => false,
-                'order' => 12,
+                'order' => 13,
                 'validation_rules' => json_encode(['nullable', 'numeric']),
                 'data_source' => null,
                 'configuration' => json_encode(['min' => 0, 'max' => 120, 'step' => 8, 'unit' => 'px']),
@@ -947,7 +966,7 @@ class ModuleSeeder extends Seeder
                 'updated_at' => now(),
             ],
 
-            // ── Colores ────────────────────────────────────────────────
+            // Colores
             [
                 'module_id' => $heroSplit->id,
                 'label' => 'Color de fondo (modo claro)',
@@ -956,7 +975,7 @@ class ModuleSeeder extends Seeder
                 'color_mode' => 'light',
                 'placeholder' => '#ffffff',
                 'is_required' => false,
-                'order' => 13,
+                'order' => 14,
                 'validation_rules' => json_encode(['nullable', 'string']),
                 'data_source' => null,
                 'configuration' => null,
@@ -971,7 +990,7 @@ class ModuleSeeder extends Seeder
                 'color_mode' => 'dark',
                 'placeholder' => '#1a1a1a',
                 'is_required' => false,
-                'order' => 14,
+                'order' => 15,
                 'validation_rules' => json_encode(['nullable', 'string']),
                 'data_source' => null,
                 'configuration' => null,
@@ -986,7 +1005,7 @@ class ModuleSeeder extends Seeder
                 'color_mode' => 'light',
                 'placeholder' => '#111111',
                 'is_required' => false,
-                'order' => 15,
+                'order' => 16,
                 'validation_rules' => json_encode(['nullable', 'string']),
                 'data_source' => null,
                 'configuration' => null,
@@ -1001,7 +1020,7 @@ class ModuleSeeder extends Seeder
                 'color_mode' => 'dark',
                 'placeholder' => '#ffffff',
                 'is_required' => false,
-                'order' => 16,
+                'order' => 17,
                 'validation_rules' => json_encode(['nullable', 'string']),
                 'data_source' => null,
                 'configuration' => null,
@@ -1009,7 +1028,7 @@ class ModuleSeeder extends Seeder
                 'updated_at' => now(),
             ],
 
-            // ── Padding ────────────────────────────────────────────────
+            // Padding
             [
                 'module_id' => $heroSplit->id,
                 'label' => 'Padding superior',
@@ -1018,7 +1037,7 @@ class ModuleSeeder extends Seeder
                 'color_mode' => 'both',
                 'placeholder' => '60',
                 'is_required' => false,
-                'order' => 17,
+                'order' => 18,
                 'validation_rules' => json_encode(['nullable', 'numeric']),
                 'data_source' => null,
                 'configuration' => json_encode(['min' => 0, 'max' => 200, 'step' => 5, 'unit' => 'px']),
@@ -1033,7 +1052,7 @@ class ModuleSeeder extends Seeder
                 'color_mode' => 'both',
                 'placeholder' => '60',
                 'is_required' => false,
-                'order' => 18,
+                'order' => 19,
                 'validation_rules' => json_encode(['nullable', 'numeric']),
                 'data_source' => null,
                 'configuration' => json_encode(['min' => 0, 'max' => 200, 'step' => 5, 'unit' => 'px']),
@@ -1048,7 +1067,7 @@ class ModuleSeeder extends Seeder
                 'color_mode' => 'both',
                 'placeholder' => '40',
                 'is_required' => false,
-                'order' => 19,
+                'order' => 20,
                 'validation_rules' => json_encode(['nullable', 'numeric']),
                 'data_source' => null,
                 'configuration' => json_encode(['min' => 0, 'max' => 200, 'step' => 5, 'unit' => 'px']),
@@ -1063,7 +1082,7 @@ class ModuleSeeder extends Seeder
                 'color_mode' => 'both',
                 'placeholder' => '40',
                 'is_required' => false,
-                'order' => 20,
+                'order' => 21,
                 'validation_rules' => json_encode(['nullable', 'numeric']),
                 'data_source' => null,
                 'configuration' => json_encode(['min' => 0, 'max' => 200, 'step' => 5, 'unit' => 'px']),
