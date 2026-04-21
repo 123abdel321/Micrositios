@@ -2,25 +2,24 @@
 
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
-//CONTROLLERS
 use App\Http\Controllers\BlockController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\EmpresaController;
-
+use App\Http\Controllers\PublicLandingController;
 use App\Http\Controllers\Api\OptionsController;
 use App\Http\Controllers\Api\MenuItemsController;
 use App\Http\Controllers\Api\FooterConfigController;
 use App\Http\Controllers\Api\SelectOptionsController;
-use App\Http\Controllers\Api\FooterColumnsController;
-use App\Http\Controllers\Api\SocialNetworksController;
 
+// Portal principal
 Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
 
+// Rutas autenticadas (dashboard, builder, empresas, etc.)
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    //Empresas
+    // Empresas
     Route::controller(EmpresaController::class)->group(function () {
         Route::get('/empresas', 'index')->name('empresas.index');
         Route::get('/empresas-create', 'create')->name('empresas.create');
@@ -33,10 +32,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/empresas-select', 'selectEmpresa')->name('empresas.select');
     });
 
+    // Builder de landings (con conexión a BD de la empresa)
     Route::group(['middleware' => ['client_connection']], function () {
         Route::inertia('dashboard', 'dashboard')->name('dashboard');
     
-        // Landings
         Route::controller(LandingController::class)->group(function () {
             Route::get('/builder', 'index')->name('builder.index');
             Route::get('/builder/create', 'create')->name('builder.create');
@@ -47,22 +46,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/builder/{landing}/save', 'save')->name('builder.save');
         });
     
-        // Bloques de una landing
         Route::controller(BlockController::class)->group(function () {
             Route::post('/builder/{landing}/blocks', 'store')->name('blocks.store');
             Route::put('/builder/{landing}/blocks/{block}', 'update')->name('blocks.update');
             Route::delete('/builder/{landing}/blocks/{block}', 'destroy')->name('blocks.destroy');
-            // Reordenar bloques
             Route::post('/builder/{landing}/blocks/reorder', 'reorder')->name('blocks.reorder');
         });
-    });    
-
-
+    });
 });
 
-// ✅ Agregar las API routes con prefijo /api/
+// API routes (con prefijo /api)
 Route::middleware(['auth', 'verified', 'client_connection'])->prefix('api')->group(function () {
-    
     Route::get('/landings/options', [SelectOptionsController::class, 'getLandings']);
     Route::get('/select-options/{type}', [SelectOptionsController::class, 'getOptions']);
     Route::get('/menu-items', [MenuItemsController::class, 'index']);
@@ -71,6 +65,15 @@ Route::middleware(['auth', 'verified', 'client_connection'])->prefix('api')->gro
     Route::get('/footer-config/{landingId}', [FooterConfigController::class, 'getForLanding']);
     Route::get('/column-types', [OptionsController::class, 'getColumnTypes']);
     Route::get('/social-platforms', [OptionsController::class, 'getSocialPlatforms']);
+});
+
+// ============================================
+// RUTAS PÚBLICAS DE EMPRESAS (FALLBACK)
+// Se ejecutan SOLO si ninguna ruta anterior coincidió
+// ============================================
+Route::middleware(['set.db.empresa'])->group(function () {
+    Route::get('/{empresaSlug}', [PublicLandingController::class, 'home'])->name('empresa.home');
+    Route::get('/{empresaSlug}/{slug}', [PublicLandingController::class, 'show'])->name('empresa.show');
 });
 
 require __DIR__.'/settings.php';

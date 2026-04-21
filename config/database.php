@@ -58,7 +58,7 @@ return [
             'url' => env('MICROSITE_DATABASE_URL'),
             'host' => env('MICROSITE_DB_HOST', '127.0.0.1'),
             'port' => env('MICROSITE_DB_PORT', '3306'),
-            'database' => env('MICROSITE_DB_DATABASE', 'forge'),
+            'database' => null,
             'username' => env('MICROSITE_DB_USERNAME', 'forge'),
             'password' => env('MICROSITE_DB_PASSWORD', ''),
             'unix_socket' => env('MICROSITE_DB_SOCKET', ''),

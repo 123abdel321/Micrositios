@@ -17,11 +17,13 @@ class Landing extends Model
         'name',
         'slug',
         'is_active',
+        'is_principal',
         'order'
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_principal' => 'boolean',
     ];
 
     public function user(): BelongsTo

@@ -21,6 +21,11 @@ return new class extends Migration
             $table->string('email', 100)->nullable();
             $table->string('logo', 300)->nullable();
             $table->string('hash', 100);
+
+            $table->string('subdomain', 100)->nullable()->unique();
+            $table->string('custom_domain', 255)->nullable()->unique();
+            $table->enum('domain_type', ['subdomain', 'custom'])->default('subdomain');
+
             $table->string('estado', 20)->default('activo')->comment('activo, inactivo');
             $table->timestamps();
         });
