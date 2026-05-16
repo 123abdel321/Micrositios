@@ -1,16 +1,9 @@
+// FooterBlock.tsx
 import React from 'react';
 import { useAppData } from '@/contexts/AppDataContext';
 import {
-    Facebook,
-    Twitter,
-    Instagram,
-    Linkedin,
-    Youtube,
-    MessageCircle,
-    Music2,
-    Phone,
-    Mail,
-    MapPin
+    Facebook, Twitter, Instagram, Linkedin, Youtube,
+    MessageCircle, Music2, Phone, Mail, MapPin
 } from 'lucide-react';
 
 interface Props {
@@ -21,7 +14,7 @@ interface Props {
 
 interface ColumnItem {
     id: string;
-    type: 'links' | 'social' | 'contact';
+    type: 'links' | 'social' | 'contact' | 'free_text'; // ← nuevo tipo
     title: string;
     links?: number[];
     socials?: Array<{ platform: string; url: string }>;
@@ -32,12 +25,16 @@ interface ColumnItem {
         whatsapp?: string;
         whatsapp_message?: string;
     };
+    // Nuevos campos para free_text
+    content?: string;
+    image_url?: string;
+    image_alt?: string;
+    image_position?: 'top' | 'left' | 'right';
 }
 
 const FooterBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'light' }) => {
     const { menuItems } = useAppData();
 
-    // Valores según tema
     const bgColor = theme === 'dark' ? values.bg_color_dark : values.bg_color_light;
     const textColor = theme === 'dark' ? values.text_color_dark : values.text_color_light;
     
@@ -64,12 +61,9 @@ const FooterBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'ligh
 
     const getContainerClass = () => {
         switch (footer_width) {
-            case 'full':
-                return 'w-full px-6';
-            case 'container-fluid':
-                return 'container-fluid px-4';
-            default:
-                return 'container mx-auto px-4';
+            case 'full': return 'w-full px-6';
+            case 'container-fluid': return 'container-fluid px-4';
+            default: return 'container mx-auto px-4';
         }
     };
 
@@ -86,60 +80,32 @@ const FooterBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'ligh
         return gridClasses[cols] || 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4';
     };
 
-    // Procesar footer_columns - puede ser string JSON o array
     const getColumns = (): ColumnItem[] => {
         if (!footer_columns) return [];
-
-        if (Array.isArray(footer_columns)) {
-            return footer_columns;
-        }
-
+        if (Array.isArray(footer_columns)) return footer_columns;
         if (typeof footer_columns === 'string') {
             try {
                 const parsed = JSON.parse(footer_columns);
-
-                if (Array.isArray(parsed)) {
-                    return parsed;
-                }
-
-                return [];
-            } catch (e) {
-                console.error('Error parsing footer_columns:', e, footer_columns);
-                return [];
-            }
+                return Array.isArray(parsed) ? parsed : [];
+            } catch { return []; }
         }
-
         return [];
     };
 
     const columns = getColumns();
 
+    // Render para columna de enlaces (sin cambios)
     const renderLinksColumn = (column: ColumnItem) => {
         const linkIds = column.links || [];
-        
-        // Obtener los items del menú por sus IDs
-        const itemsToShow = menuItems?.filter((item) => 
-            item.id !== null && linkIds.includes(item.id)
-        ) || [];
-        
+        const itemsToShow = menuItems?.filter(item => item.id !== null && linkIds.includes(item.id)) || [];
         if (itemsToShow.length === 0) {
-            return (
-                <ul className="space-y-2">
-                    <li><a href="#" className="hover:underline">Sin enlaces</a></li>
-                </ul>
-            );
+            return <ul className="space-y-2"><li><a href="#" className="hover:underline">Sin enlaces</a></li></ul>;
         }
-        
         return (
             <ul className="space-y-2">
-                {itemsToShow.map((item, idx: number) => (
+                {itemsToShow.map((item, idx) => (
                     <li key={idx}>
-                        <a 
-                            href={item.url}
-                            target="_self"
-                            className="hover:underline transition-all"
-                            style={{ color: 'inherit' }}
-                        >
+                        <a href={item.url} target="_self" className="hover:underline transition-all" style={{ color: 'inherit' }}>
                             {item.label}
                         </a>
                     </li>
@@ -148,19 +114,17 @@ const FooterBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'ligh
         );
     };
 
+    // Render para redes sociales (con validación de URL)
     const renderSocialColumn = (column: ColumnItem) => {
         const socials = column.socials || [];
-        
-        if (socials.length === 0) return null;
-        
+        const validSocials = socials.filter(social => social.url && social.url.trim() !== '');
+        if (validSocials.length === 0) return null;
         return (
             <div className="flex flex-col space-y-3">
-                {socials.map((social, idx) => (
-                    <a
-                        key={idx}
+                {validSocials.map((social, idx) => (
+                    <a key={idx}
                         href={social.url.startsWith('http') ? social.url : `https://${social.url}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        target="_blank" rel="noopener noreferrer"
                         className="hover:opacity-80 transition-opacity flex items-center gap-2"
                         style={{ color: 'inherit' }}
                     >
@@ -172,109 +136,107 @@ const FooterBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'ligh
         );
     };
 
+    // Render para contacto (sin cambios)
     const renderContactColumn = (column: ColumnItem) => {
         const contact = column.contact || {};
-        
         return (
             <div className="space-y-3">
                 {contact.phones?.map((phone, idx) => (
                     <div key={idx} className="flex items-center gap-2">
                         <Phone size={16} />
-                        <a href={`tel:${phone}`} className="hover:underline">
-                            {phone}
-                        </a>
+                        <a href={`tel:${phone}`} className="hover:underline">{phone}</a>
                     </div>
                 ))}
-
                 {contact.email && (
                     <div className="flex items-center gap-2">
                         <Mail size={16} />
-                        <a href={`mailto:${contact.email}`} className="hover:underline">
-                            {contact.email}
-                        </a>
+                        <a href={`mailto:${contact.email}`} className="hover:underline">{contact.email}</a>
                     </div>
                 )}
-
                 {contact.address && (
                     <div className="flex items-center gap-2">
                         <MapPin size={16} />
                         <span>{contact.address}</span>
                     </div>
                 )}
-
                 {contact.whatsapp && (
                     <div className="flex items-center gap-2">
                         <MessageCircle size={16} />
-                        <a 
-                            href={`https://wa.me/${contact.whatsapp}${contact.whatsapp_message ? `?text=${encodeURIComponent(contact.whatsapp_message)}` : ''}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="hover:underline"
-                        >
-                            WhatsApp
-                        </a>
+                        <a href={`https://wa.me/${contact.whatsapp}${contact.whatsapp_message ? `?text=${encodeURIComponent(contact.whatsapp_message)}` : ''}`}
+                           target="_blank" rel="noopener noreferrer" className="hover:underline">WhatsApp</a>
                     </div>
                 )}
             </div>
         );
     };
 
+    // 🆕 Render para texto libre con imagen
+    const renderFreeTextColumn = (column: ColumnItem) => {
+        const { content, image_url, image_alt, image_position = 'top' } = column;
+        const imageElement = image_url ? (
+            <img src={image_url} alt={image_alt || column.title} className="max-w-full h-auto rounded-md mb-3" />
+        ) : null;
+
+        const textElement = content ? (
+            <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: content }} />
+        ) : null;
+
+        if (image_position === 'left') {
+            return (
+                <div className="flex gap-4 items-start">
+                    {imageElement && <div className="flex-shrink-0 w-16">{imageElement}</div>}
+                    <div className="flex-1">{textElement}</div>
+                </div>
+            );
+        }
+        if (image_position === 'right') {
+            return (
+                <div className="flex gap-4 items-start">
+                    <div className="flex-1">{textElement}</div>
+                    {imageElement && <div className="flex-shrink-0 w-16">{imageElement}</div>}
+                </div>
+            );
+        }
+        // top (default)
+        return (
+            <div>
+                {imageElement}
+                {textElement}
+            </div>
+        );
+    };
+
     const getSocialIcon = (platform: string) => {
         const icons: Record<string, React.ReactNode> = {
-            facebook: <Facebook size={18} />,
-            twitter: <Twitter size={18} />,
-            instagram: <Instagram size={18} />,
-            linkedin: <Linkedin size={18} />,
-            youtube: <Youtube size={18} />,
-            whatsapp: <MessageCircle size={18} />,
+            facebook: <Facebook size={18} />, twitter: <Twitter size={18} />,
+            instagram: <Instagram size={18} />, linkedin: <Linkedin size={18} />,
+            youtube: <Youtube size={18} />, whatsapp: <MessageCircle size={18} />,
             tiktok: <Music2 size={18} />
         };
-
         return icons[platform.toLowerCase()] || <span>🔗</span>;
     };
 
-    const capitalize = (str: string): string => {
-        return str.charAt(0).toUpperCase() + str.slice(1);
-    };
+    const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
 
     const renderColumnContent = (column: ColumnItem) => {
         switch (column.type) {
-            case 'links':
-                return renderLinksColumn(column);
-            case 'social':
-                return renderSocialColumn(column);
-            case 'contact':
-                return renderContactColumn(column);
-            default:
-                return null;
+            case 'links': return renderLinksColumn(column);
+            case 'social': return renderSocialColumn(column);
+            case 'contact': return renderContactColumn(column);
+            case 'free_text': return renderFreeTextColumn(column);
+            default: return null;
         }
     };
 
-    // Renderizar columnas
     const renderColumns = () => {
         if (columns.length === 0) {
-            // Columnas por defecto
             return (
                 <>
-                    <div>
-                        <h3 className="font-semibold mb-4">Enlaces</h3>
-                        <ul className="space-y-2">
-                            <li><a href="/" className="hover:underline">Inicio</a></li>
-                            <li><a href="/sobre-nosotros" className="hover:underline">Acerca</a></li>
-                            <li><a href="/contacto" className="hover:underline">Contacto</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h3 className="font-semibold mb-4">Legal</h3>
-                        <ul className="space-y-2">
-                            <li><a href="/privacidad" className="hover:underline">Privacidad</a></li>
-                            <li><a href="/terminos" className="hover:underline">Términos</a></li>
-                        </ul>
-                    </div>
+                    <div><h3 className="font-semibold mb-4">Enlaces</h3><ul className="space-y-2"><li><a href="/" className="hover:underline">Inicio</a></li><li><a href="/sobre-nosotros" className="hover:underline">Acerca</a></li><li><a href="/contacto" className="hover:underline">Contacto</a></li></ul></div>
+                    <div><h3 className="font-semibold mb-4">Legal</h3><ul className="space-y-2"><li><a href="/privacidad" className="hover:underline">Privacidad</a></li><li><a href="/terminos" className="hover:underline">Términos</a></li></ul></div>
                 </>
             );
         }
-
         return columns.map((column, idx) => (
             <div key={column.id || idx}>
                 <h3 className="font-semibold mb-4">{column.title}</h3>
@@ -285,22 +247,10 @@ const FooterBlock: React.FC<Props> = ({ values, isPreview = false, theme = 'ligh
 
     return (
         <footer style={footerStyle} className="w-full relative">
-            {isPreview && (
-                <div 
-                    className="text-xs opacity-60 bg-black/50 text-white px-2 py-1 rounded absolute bottom-2 left-2 z-50"
-                >
-                    [Footer]
-                </div>
-            )}
+            {isPreview && <div className="text-xs opacity-60 bg-black/50 text-white px-2 py-1 rounded absolute bottom-2 left-2 z-50">[Footer]</div>}
             <div className={getContainerClass()}>
-                <div className={`grid ${getGridCols()} gap-8 mb-8`}>
-                    {renderColumns()}
-                </div>
-
-                {/* Copyright */}
-                <div className="text-sm text-center pt-6 border-t border-current/20">
-                    <p>{copyright_text}</p>
-                </div>
+                <div className={`grid ${getGridCols()} gap-8 mb-8`}>{renderColumns()}</div>
+                <div className="text-sm text-center pt-6 border-t border-current/20"><p>{copyright_text}</p></div>
             </div>
         </footer>
     );
