@@ -49,7 +49,7 @@ const SortableBlock: React.FC<SortableBlockProps> = ({
             }`}
         >
             {/* Controles flotantes */}
-            <div className="absolute top-3 right-3 z-20 flex items-center gap-1 bg-background/90 backdrop-blur-sm rounded-md shadow-sm border opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute top-3 right-3 z-50 flex items-center gap-1 bg-background/90 backdrop-blur-sm rounded-md shadow-sm border opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
                     {...attributes}
                     {...listeners}
@@ -81,7 +81,7 @@ const SortableBlock: React.FC<SortableBlockProps> = ({
 
             {/* Indicador de selección */}
             {isSelected && (
-                <div className="absolute top-2 left-2 text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-md shadow-sm">
+                <div className="absolute top-2 left-2 z-50 text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-md shadow-sm">
                     Seleccionado
                 </div>
             )}
