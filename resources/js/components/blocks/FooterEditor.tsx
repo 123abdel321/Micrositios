@@ -3,43 +3,25 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import {
-    Plus,
-    Trash2,
-    GripVertical,
-    Facebook,
-    Twitter,
-    Instagram,
-    Linkedin,
-    MessageCircle
-} from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Plus, Trash2, Facebook, Twitter, Instagram, Linkedin, MessageCircle } from 'lucide-react';
 import { useAppData } from '@/contexts/AppDataContext';
 
-interface ColumnType {
-    value: string;
-    label: string;
-}
-
+interface ColumnType { value: string; label: string; }
 interface Column {
     id: string;
-    type: 'links' | 'social' | 'contact';
+    type: 'links' | 'social' | 'contact' | 'free_text';
     title: string;
     links?: number[];
     socials?: Array<{ platform: string; url: string }>;
-    contact?: {
-        phones?: string[];
-        email?: string;
-        address?: string;
-        whatsapp?: string;
-        whatsapp_message?: string;
-    };
+    contact?: { phones?: string[]; email?: string; address?: string; whatsapp?: string; whatsapp_message?: string };
+    content?: string;
+    image_url?: string;
+    image_alt?: string;
+    image_position?: 'top' | 'left' | 'right';
 }
 
-interface Props {
-    value: Column[] | string | null;
-    onChange: (value: Column[]) => void;
-}
+interface Props { value: Column[] | string | null; onChange: (value: Column[]) => void; }
 
 const parseInitialValue = (value: Column[] | string | null): Column[] => {
     if (Array.isArray(value) && value.length > 0) return value;
@@ -47,119 +29,70 @@ const parseInitialValue = (value: Column[] | string | null): Column[] => {
         try {
             const parsed = JSON.parse(value);
             if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        } catch (e) {
-            console.error('Error parsing footer value:', e);
-        }
+        } catch (e) { console.error(e); }
     }
-    return [{
-        id: Date.now().toString(),
-        type: 'links',
-        title: 'Enlaces',
-        links: [],
-        socials: [],
-        contact: {}
-    }];
-}
+    return [{ id: Date.now().toString(), type: 'links', title: 'Enlaces', links: [], socials: [], contact: {} }];
+};
 
 const FooterEditor: React.FC<Props> = ({ value, onChange }) => {
     const { menuItems } = useAppData();
     const [columns, setColumns] = useState<Column[]>(() => parseInitialValue(value));
     const onChangeRef = useRef(onChange);
 
-    // ← AGREGA ESTO — mantiene el ref actualizado sin causar loops
-    useEffect(() => {
-        onChangeRef.current = onChange;
-    });
-
-    useEffect(() => {
-        onChangeRef.current(columns);
-    }, [columns]);
+    useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
+    useEffect(() => { onChangeRef.current(columns); }, [columns]);
 
     const columnTypes: ColumnType[] = [
         { value: 'links', label: 'Enlaces' },
         { value: 'social', label: 'Redes Sociales' },
-        { value: 'contact', label: 'Contacto' }
-    ];
-    
-    const socialPlatforms = [
-        { value: 'facebook', label: 'Facebook', icon: <Facebook size={16} />, default_url: 'https://facebook.com/' },
-        { value: 'twitter', label: 'Twitter', icon: <Twitter size={16} />, default_url: 'https://twitter.com/' },
-        { value: 'instagram', label: 'Instagram', icon: <Instagram size={16} />, default_url: 'https://instagram.com/' },
-        { value: 'linkedin', label: 'LinkedIn', icon: <Linkedin size={16} />, default_url: 'https://linkedin.com/in/' },
-        { value: 'whatsapp', label: 'WhatsApp', icon: <MessageCircle size={16} />, default_url: 'https://wa.me/' }
+        { value: 'contact', label: 'Contacto' },
+        { value: 'free_text', label: 'Texto libre' }
     ];
 
-    // Notificar cambios al padre
-    useEffect(() => {
-        onChangeRef.current(columns);
-    }, [columns]);
+    const socialPlatforms = [
+        { value: 'facebook', label: 'Facebook', icon: <Facebook size={14} /> },
+        { value: 'twitter', label: 'Twitter', icon: <Twitter size={14} /> },
+        { value: 'instagram', label: 'Instagram', icon: <Instagram size={14} /> },
+        { value: 'linkedin', label: 'LinkedIn', icon: <Linkedin size={14} /> },
+        { value: 'whatsapp', label: 'WhatsApp', icon: <MessageCircle size={14} /> }
+    ];
 
     const addColumn = useCallback(() => {
         if (columns.length >= 5) return;
-        setColumns(prev => [
-            ...prev,
-            {
-                id: Date.now().toString(),
-                type: 'links',
-                title: 'Nueva Columna',
-                links: [],
-                socials: [],
-                contact: {}
-            }
-        ]);
+        setColumns(prev => [...prev, {
+            id: Date.now().toString(),
+            type: 'links',
+            title: 'Nueva Columna',
+            links: [],
+            socials: [],
+            contact: {}
+        }]);
     }, [columns.length]);
 
-    const removeColumn = useCallback((index: number) => {
-        setColumns(prev => prev.filter((_, i) => i !== index));
-    }, []);
-
-    const updateColumn = useCallback((index: number, updates: Partial<Column>) => {
-        setColumns(prev => prev.map((col, i) => 
-            i === index ? { ...col, ...updates } : col
-        ));
-    }, []);
+    const removeColumn = (index: number) => setColumns(prev => prev.filter((_, i) => i !== index));
+    const updateColumn = (index: number, updates: Partial<Column>) =>
+        setColumns(prev => prev.map((col, i) => i === index ? { ...col, ...updates } : col));
 
     const renderLinksColumn = (column: Column, index: number) => {
         const selectedIds = column.links || [];
-        
         return (
-            <div className="space-y-2">
-                <Label>Seleccionar enlaces</Label>
-                <Select
-                    value=""
-                    onValueChange={(val) => {
-                        const newIds = [...selectedIds, parseInt(val)];
-                        updateColumn(index, { links: newIds });
-                    }}
-                >
-                    <SelectTrigger>
-                        <SelectValue placeholder="Agregar enlace" />
-                    </SelectTrigger>
+            <div className="space-y-1">
+                <Label className="text-xs">Seleccionar enlaces</Label>
+                <Select onValueChange={(val) => updateColumn(index, { links: [...selectedIds, parseInt(val)] })}>
+                    <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Agregar enlace" /></SelectTrigger>
                     <SelectContent>
-                        {menuItems && menuItems.map((item: any) => (
-                            <SelectItem key={item.id} value={String(item.id)}>
-                                {item.label}
-                            </SelectItem>
+                        {menuItems?.map((item: any) => (
+                            <SelectItem key={item.id} value={String(item.id)}>{item.label}</SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
-                
-                <div className="flex flex-wrap gap-2 mt-2">
-                    {selectedIds.map((id) => {
+                <div className="flex flex-wrap gap-1 mt-1">
+                    {selectedIds.map(id => {
                         const item = menuItems?.find((i: any) => i.id === id);
                         return (
-                            <span key={id} className="bg-muted px-2 py-1 rounded text-sm flex items-center gap-1">
+                            <span key={id} className="bg-muted px-1.5 py-0.5 rounded text-xs flex items-center gap-1">
                                 {item?.label || id}
-                                <button
-                                    onClick={() => {
-                                        updateColumn(index, { 
-                                            links: selectedIds.filter(i => i !== id) 
-                                        });
-                                    }}
-                                    className="text-red-500 hover:text-red-700"
-                                >
-                                    ×
-                                </button>
+                                <button onClick={() => updateColumn(index, { links: selectedIds.filter(i => i !== id) })} className="text-red-500 text-xs font-bold">×</button>
                             </span>
                         );
                     })}
@@ -170,67 +103,42 @@ const FooterEditor: React.FC<Props> = ({ value, onChange }) => {
 
     const renderSocialColumn = (column: Column, index: number) => {
         const socials = column.socials || [];
-        
         return (
-            <div className="space-y-2">
-                <Label>Redes sociales</Label>
+            <div className="space-y-1">
+                <Label className="text-xs">Redes sociales</Label>
                 {socials.map((social, sIdx) => (
-                    <div key={sIdx} className="flex gap-2">
-                        <Select
-                            value={social.platform}
-                            onValueChange={(val) => {
-                                const newSocials = [...socials];
-                                newSocials[sIdx] = { ...social, platform: val };
-                                updateColumn(index, { socials: newSocials });
-                            }}
-                        >
-                            <SelectTrigger className="w-1/3">
-                                <SelectValue placeholder="Plataforma" />
-                            </SelectTrigger>
+                    <div key={sIdx} className="flex gap-1 items-center mb-1">
+                        <Select value={social.platform} onValueChange={(val) => {
+                            const newSocials = [...socials];
+                            newSocials[sIdx] = { ...social, platform: val };
+                            updateColumn(index, { socials: newSocials });
+                        }}>
+                            <SelectTrigger className="w-24 h-7 text-xs"><SelectValue /></SelectTrigger>
                             <SelectContent>
-                                {socialPlatforms.map((p) => (
+                                {socialPlatforms.map(p => (
                                     <SelectItem key={p.value} value={p.value}>
-                                        <div className="flex items-center gap-2">
-                                            {p.icon}
-                                            <span>{p.label}</span>
-                                        </div>
+                                        <div className="flex items-center gap-1">{p.icon}{p.label}</div>
                                     </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
                         <Input
-                            placeholder="URL"
-                            value={social.url}
+                            value={social.url || ''}
                             onChange={(e) => {
                                 const newSocials = [...socials];
                                 newSocials[sIdx] = { ...social, url: e.target.value };
                                 updateColumn(index, { socials: newSocials });
                             }}
-                            className="flex-1"
+                            placeholder="URL"
+                            className="flex-1 h-7 text-xs"
                         />
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                                updateColumn(index, { 
-                                    socials: socials.filter((_, i) => i !== sIdx) 
-                                });
-                            }}
-                        >
-                            <Trash2 className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateColumn(index, { socials: socials.filter((_, i) => i !== sIdx) })}>
+                            <Trash2 className="h-3 w-3" />
                         </Button>
                     </div>
                 ))}
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                        updateColumn(index, { 
-                            socials: [...socials, { platform: 'facebook', url: '' }] 
-                        });
-                    }}
-                >
-                    <Plus className="h-4 w-4 mr-1" /> Agregar red social
+                <Button variant="outline" size="sm" className="h-6 text-xs mt-1" onClick={() => updateColumn(index, { socials: [...socials, { platform: 'facebook', url: '' }] })}>
+                    <Plus className="h-3 w-3 mr-1" /> Agregar red
                 </Button>
             </div>
         );
@@ -239,160 +147,126 @@ const FooterEditor: React.FC<Props> = ({ value, onChange }) => {
     const renderContactColumn = (column: Column, index: number) => {
         const contact = column.contact || {};
         const phones = contact.phones || [];
-        
         return (
-            <div className="space-y-3">
+            <div className="space-y-1">
                 <div>
-                    <Label>Teléfonos</Label>
+                    <Label className="text-xs">Teléfonos</Label>
                     {phones.map((phone, pIdx) => (
-                        <div key={pIdx} className="flex gap-2 mt-1">
-                            <Input
-                                value={phone}
-                                onChange={(e) => {
-                                    const newPhones = [...phones];
-                                    newPhones[pIdx] = e.target.value;
-                                    updateColumn(index, { 
-                                        contact: { ...contact, phones: newPhones } 
-                                    });
-                                }}
-                                placeholder="+123 456 7890"
-                            />
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => {
-                                    updateColumn(index, { 
-                                        contact: { ...contact, phones: phones.filter((_, i) => i !== pIdx) } 
-                                    });
-                                }}
-                            >
-                                <Trash2 className="h-4 w-4" />
+                        <div key={pIdx} className="flex gap-1 mt-1">
+                            <Input value={phone} onChange={e => {
+                                const newPhones = [...phones];
+                                newPhones[pIdx] = e.target.value;
+                                updateColumn(index, { contact: { ...contact, phones: newPhones } });
+                            }} className="flex-1 h-7 text-xs" />
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateColumn(index, { contact: { ...contact, phones: phones.filter((_, i) => i !== pIdx) } })}>
+                                <Trash2 className="h-3 w-3" />
                             </Button>
                         </div>
                     ))}
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="mt-1"
-                        onClick={() => {
-                            updateColumn(index, { 
-                                contact: { ...contact, phones: [...phones, ''] } 
-                            });
-                        }}
-                    >
-                        <Plus className="h-4 w-4 mr-1" /> Agregar teléfono
+                    <Button variant="outline" size="sm" className="h-6 text-xs mt-1" onClick={() => updateColumn(index, { contact: { ...contact, phones: [...phones, ''] } })}>
+                        <Plus className="h-3 w-3 mr-1" /> Agregar teléfono
                     </Button>
                 </div>
-                
                 <div>
-                    <Label>Email</Label>
-                    <Input
-                        value={contact.email || ''}
-                        onChange={(e) => {
-                            updateColumn(index, { 
-                                contact: { ...contact, email: e.target.value } 
-                            });
-                        }}
-                        placeholder="info@tuempresa.com"
+                    <Label className="text-xs">Email</Label>
+                    <Input value={contact.email || ''} onChange={e => updateColumn(index, { contact: { ...contact, email: e.target.value } })} className="h-7 text-xs" />
+                </div>
+                <div>
+                    <Label className="text-xs">Dirección</Label>
+                    <Input value={contact.address || ''} onChange={e => updateColumn(index, { contact: { ...contact, address: e.target.value } })} className="h-7 text-xs" />
+                </div>
+                <div>
+                    <Label className="text-xs">WhatsApp</Label>
+                    <Input value={contact.whatsapp || ''} onChange={e => updateColumn(index, { contact: { ...contact, whatsapp: e.target.value } })} className="h-7 text-xs" placeholder="+1234567890" />
+                </div>
+                <div>
+                    <Label className="text-xs">Mensaje WhatsApp</Label>
+                    <Input value={contact.whatsapp_message || ''} onChange={e => updateColumn(index, { contact: { ...contact, whatsapp_message: e.target.value } })} className="h-7 text-xs" />
+                </div>
+            </div>
+        );
+    };
+
+    const renderFreeTextColumn = (column: Column, index: number) => {
+        return (
+            <div className="space-y-2">
+                <div>
+                    <Label className="text-xs">Contenido (HTML básico)</Label>
+                    <textarea
+                        value={column.content || ''}
+                        onChange={e => updateColumn(index, { content: e.target.value })}
+                        rows={3}
+                        className="w-full rounded-md border border-input bg-background px-2 py-1 text-xs ring-offset-background focus-visible:outline-none focus-visible:ring-1 font-mono"
+                        placeholder="<p>Texto</p><ul><li>Item</li></ul>"
                     />
                 </div>
-                
                 <div>
-                    <Label>Dirección</Label>
-                    <Input
-                        value={contact.address || ''}
-                        onChange={(e) => {
-                            updateColumn(index, { 
-                                contact: { ...contact, address: e.target.value } 
-                            });
-                        }}
-                        placeholder="Calle Principal 123, Ciudad"
-                    />
+                    <Label className="text-xs">URL imagen (opcional)</Label>
+                    <Input value={column.image_url || ''} onChange={e => updateColumn(index, { image_url: e.target.value })} placeholder="https://" className="h-7 text-xs" />
                 </div>
-                
                 <div>
-                    <Label>WhatsApp</Label>
-                    <Input
-                        value={contact.whatsapp || ''}
-                        onChange={(e) => {
-                            updateColumn(index, { 
-                                contact: { ...contact, whatsapp: e.target.value } 
-                            });
-                        }}
-                        placeholder="+1234567890"
-                    />
+                    <Label className="text-xs">Texto alternativo</Label>
+                    <Input value={column.image_alt || ''} onChange={e => updateColumn(index, { image_alt: e.target.value })} className="h-7 text-xs" />
                 </div>
-                
                 <div>
-                    <Label>Mensaje WhatsApp (opcional)</Label>
-                    <Input
-                        value={contact.whatsapp_message || ''}
-                        onChange={(e) => {
-                            updateColumn(index, { 
-                                contact: { ...contact, whatsapp_message: e.target.value } 
-                            });
-                        }}
-                        placeholder="Hola, me gustaría más información"
-                    />
+                    <Label className="text-xs">Posición imagen</Label>
+                    <Select value={column.image_position || 'top'} onValueChange={(val: any) => updateColumn(index, { image_position: val })}>
+                        <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="top">Arriba</SelectItem>
+                            <SelectItem value="left">Izquierda</SelectItem>
+                            <SelectItem value="right">Derecha</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
             </div>
         );
     };
 
     return (
-        <div className="h-full overflow-y-auto space-y-4 custom-scrollbar">
+        <div className="space-y-2">
             {columns.map((column, index) => (
-                <Card key={column.id} className="relative">
-                    <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between gap-2 flex-wrap">
-                            <div className="flex items-center gap-2 flex-1">
-                                <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
-                                <Input
-                                    value={column.title}
-                                    onChange={(e) => updateColumn(index, { title: e.target.value })}
-                                    className="flex-1 min-w-[120px] font-semibold"
-                                    placeholder="Título de la columna"
-                                />
-                            </div>
-                            <div className="flex items-center gap-1 shrink-0">
-                                <Select
-                                    value={column.type}
-                                    onValueChange={(val: any) => updateColumn(index, { type: val })}
-                                >
-                                    <SelectTrigger className="w-[110px] h-8 text-xs">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {columnTypes.map((type) => (
-                                            <SelectItem key={type.value} value={type.value}>
-                                                {type.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8"
-                                    onClick={() => removeColumn(index)}
-                                >
-                                    <Trash2 className="h-4 w-4 text-red-500" />
-                                </Button>
-                            </div>
+                <Card key={column.id} className="border shadow-sm overflow-hidden gap-1">
+                    {/* Encabezado compacto */}
+                    <div className="bg-muted/20 px-2 py-1 border-b flex flex-wrap items-center justify-between gap-1">
+                        <div className="flex-1 min-w-[120px]">
+                            <Input
+                                value={column.title}
+                                onChange={e => updateColumn(index, { title: e.target.value })}
+                                className="h-8 text-xs font-medium"
+                                placeholder="Título"
+                            />
                         </div>
-                    </CardHeader>
-                    <CardContent>
+                        <div className="flex items-center gap-1 min-w-[150px]">
+                            <Select value={column.type} onValueChange={(val: any) => updateColumn(index, { type: val })}>
+                                <SelectTrigger className="w-[500px] h-7 text-xs">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {columnTypes.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-red-500 hover:text-red-700"
+                                onClick={() => removeColumn(index)}
+                            >
+                                <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                        </div>
+                    </div>
+                    <CardContent className="pt-0">
                         {column.type === 'links' && renderLinksColumn(column, index)}
                         {column.type === 'social' && renderSocialColumn(column, index)}
                         {column.type === 'contact' && renderContactColumn(column, index)}
+                        {column.type === 'free_text' && renderFreeTextColumn(column, index)}
                     </CardContent>
                 </Card>
             ))}
-            
             {columns.length < 5 && (
-                <Button onClick={addColumn} variant="outline" className="w-full">
-                    <Plus className="h-4 w-4 mr-2" /> Agregar columna ({columns.length}/5)
+                <Button onClick={addColumn} variant="outline" size="sm" className="w-full h-7 text-xs">
+                    <Plus className="h-3 w-3 mr-1" /> Agregar columna ({columns.length}/5)
                 </Button>
             )}
         </div>
