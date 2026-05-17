@@ -2,12 +2,12 @@
 import { useState, useCallback, useMemo, useImperativeHandle, forwardRef } from 'react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { DragOverlay } from '@dnd-kit/core';
 import { Module, Block, Landing } from '@/types/builder';
 import { createBlockFromModule } from '@/lib/blockUtils';
-import BlocksPanel from './BlocksPanel';
+import BlocksToolbar from './BlocksToolbar'; // nuevo componente (barra horizontal)
 import Canvas from './Canvas';
 import PropertiesPanel from './PropertiesPanel';
-import { DragOverlay } from '@dnd-kit/core';
 import BlockRenderer from '@/components/blocks/BlockRenderer';
 
 export interface BuilderRef {
@@ -20,7 +20,6 @@ interface Props {
     onSave?: (blocks: Block[]) => void;
 }
 
-// Tab type para móvil
 type MobileTab = 'blocks' | 'canvas' | 'properties';
 
 const Builder = forwardRef<BuilderRef, Props>(({ modules, landing }, ref) => {
@@ -28,14 +27,13 @@ const Builder = forwardRef<BuilderRef, Props>(({ modules, landing }, ref) => {
     const [selectedBlockIndex, setSelectedBlockIndex] = useState<number | null>(null);
     const [mobileTab, setMobileTab] = useState<MobileTab>('canvas');
     const [activeBlock, setActiveBlock] = useState<Block | null>(null);
+    const [showBlocksDrawer, setShowBlocksDrawer] = useState(false); // para móvil/tablet
 
-    // Cuando se selecciona un bloque en móvil, ir automáticamente a propiedades
     const handleSelectBlock = useCallback((index: number) => {
         setSelectedBlockIndex(index);
         setMobileTab('properties');
     }, []);
 
-    // Cuando se agrega un bloque en móvil, ir al canvas
     const handleAddBlock = useCallback((module: Module) => {
         const newBlock = createBlockFromModule(module, blocks.length);
         setBlocks(prev => [...prev, newBlock]);
@@ -152,7 +150,8 @@ const Builder = forwardRef<BuilderRef, Props>(({ modules, landing }, ref) => {
             {/* ── MOBILE: Contenido según tab activo ── */}
             <div className="flex-1 overflow-hidden md:hidden">
                 <div className={`h-full overflow-y-auto ${mobileTab !== 'blocks' ? 'hidden' : ''}`}>
-                    <BlocksPanel modules={modules} onAddBlock={handleAddBlock} />
+                    {/* En móvil seguimos usando un panel vertical, pero podrías también usar el toolbar horizontal con scroll */}
+                    <BlocksToolbar modules={modules} onAddBlock={handleAddBlock} isMobile />
                 </div>
                 <div className={`h-full overflow-y-auto ${mobileTab !== 'canvas' ? 'hidden' : ''}`}>
                     {canvasContent}
@@ -166,32 +165,33 @@ const Builder = forwardRef<BuilderRef, Props>(({ modules, landing }, ref) => {
                 </div>
             </div>
 
-            {/* ── TABLET/DESKTOP: Layout horizontal ── */}
-            <div className="hidden md:flex flex-1 h-full overflow-hidden">
-
-                {/* Panel izquierdo */}
-                <div className="w-56 border-r overflow-hidden shrink-0">
-                    <BlocksPanel modules={modules} onAddBlock={handleAddBlock} />
+            {/* ── TABLET/DESKTOP: Layout de 2 columnas (barra superior + canvas + properties) ── */}
+            <div className="hidden md:flex flex-col h-full overflow-hidden">
+                {/* Barra superior de bloques (horizontal) */}
+                <div className="border-b bg-gray-50 shrink-0">
+                    <BlocksToolbar modules={modules} onAddBlock={handleAddBlock} />
                 </div>
 
-                {/* Canvas central */}
-                <div className="flex-1 overflow-y-auto min-w-0">
-                    {canvasContent}
-                </div>
+                {/* Contenedor principal: canvas + properties */}
+                <div className="flex flex-1 overflow-hidden">
+                    {/* Canvas (ocupa todo el ancho menos properties) */}
+                    <div className="flex-1 overflow-y-auto min-w-0">
+                        {canvasContent}
+                    </div>
 
-                {/* Panel derecho */}
-                <div className={`border-l overflow-y-auto shrink-0 transition-all duration-200
-                    ${selectedBlockIndex !== null
-                        ? 'w-72 lg:w-80'
-                        : 'w-0 lg:w-80 overflow-hidden'
-                    }`}>
-                    <PropertiesPanel
-                        block={selectedBlockIndex !== null ? blocks[selectedBlockIndex] : null}
-                        moduleMap={moduleMap}
-                        onBlockChange={handleBlockChange}
-                    />
+                    {/* Panel de propiedades colapsable */}
+                    <div className={`border-l overflow-y-auto shrink-0 transition-all duration-200
+                        ${selectedBlockIndex !== null
+                            ? 'w-72 lg:w-80'
+                            : 'w-0 lg:w-80 overflow-hidden'
+                        }`}>
+                        <PropertiesPanel
+                            block={selectedBlockIndex !== null ? blocks[selectedBlockIndex] : null}
+                            moduleMap={moduleMap}
+                            onBlockChange={handleBlockChange}
+                        />
+                    </div>
                 </div>
-
             </div>
         </div>
     );

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { Block, Module, Component } from '@/types/builder';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,91 +16,66 @@ interface Props {
     onChange: (fieldName: string, value: any) => void;
 }
 
-// Componente SelectField separado para manejar su propio estado
-// Componente SelectField con caché usando useAppData
+// Componente SelectField con caché (sin cambios, solo se usa igual)
 const SelectField: React.FC<{
     component: Component;
     value: any;
     onChange: (value: any) => void;
 }> = ({ component, value, onChange }) => {
-    // 👇 AÑADIR getOrCreatePromise a la desestructuración
     const { getCachedData, setCachedData, isLoading: isGlobalLoading, getOrCreatePromise } = useAppData();
-    
     const config = component.configuration as any || {};
     const options = React.useMemo(() => config.options || [], [config.options]);
     const isMultiple = config.is_multiple || false;
     const maxSelections = config.max_selections || null;
     const placeholder = config.placeholder || component.placeholder || "Selecciona una opción";
-    
     const cacheKey = component.data_source || `static_${component.id}`;
     
-    // Estado inicial: intentar obtener del caché
     const [selectOptions, setSelectOptions] = useState<any[]>(() => {
         const cached = getCachedData(cacheKey);
-        if (cached && cached.length > 0) {
-            return cached;
-        }
+        if (cached && cached.length > 0) return cached;
         return options;
     });
-    
     const [loadingOptions, setLoadingOptions] = useState(false);
     const [hasLoaded, setHasLoaded] = useState(() => {
-        // Si ya hay datos en caché, marcar como cargado
         const cached = getCachedData(cacheKey);
         return cached && cached.length > 0;
     });
     
-    // 👇 MODIFICAR EL useEffect COMPLETO
     useEffect(() => {
-        // Si ya cargamos o ya tenemos opciones, salimos
         if (hasLoaded || selectOptions.length > 0) return;
-
         const loadOptions = async () => {
             if (!component.data_source) {
                 setSelectOptions(options);
                 setHasLoaded(true);
                 return;
             }
-
-            // Verificar caché nuevamente
             const cached = getCachedData(cacheKey);
             if (cached && cached.length > 0) {
                 setSelectOptions(cached);
                 setHasLoaded(true);
                 return;
             }
-
             setLoadingOptions(true);
-
             try {
                 const fetcher = async () => {
-                    // axios lanza error automáticamente si status >= 400
                     const response = await apiClient.get(component.data_source ?? '');
-                    return response.data; // ✅ axios devuelve datos en .data
+                    return response.data;
                 };
-
                 const data = await getOrCreatePromise(cacheKey, fetcher);
-                
                 setCachedData(cacheKey, data);
                 setSelectOptions(data);
                 setHasLoaded(true);
-                
             } catch (error) {
                 console.error('Error loading select options:', error);
-                // axios coloca el error en error.response.status
-                if (error instanceof Error) {
-                    setSelectOptions([]);
-                }
+                setSelectOptions([]);
                 setHasLoaded(true);
             } finally {
                 setLoadingOptions(false);
             }
         };
-
         loadOptions();
     }, [component.data_source, options, hasLoaded, cacheKey, getCachedData, setCachedData, getOrCreatePromise, selectOptions.length]);
     
-    // 👇 MODIFICAR LA CONDICIÓN DE CARGA para incluir isGlobalLoading
     if (loadingOptions || isGlobalLoading(cacheKey)) {
         return (
             <div className="flex items-center gap-2 p-2">
@@ -110,21 +85,11 @@ const SelectField: React.FC<{
         );
     }
     
-    // 👇 MODIFICAR EL BOTÓN DE REINTENTO para que funcione correctamente
     if (selectOptions.length === 0 && hasLoaded) {
         return (
             <div className="text-sm text-red-500 border rounded p-2">
                 <p>Error al cargar las opciones</p>
-                <button
-                    onClick={() => {
-                        // Resetear estados para reintentar
-                        setHasLoaded(false);
-                        setSelectOptions([]);
-                        // Opcional: limpiar caché si existe
-                        // setCachedData(cacheKey, []);
-                    }}
-                    className="text-xs underline mt-1"
-                >
+                <button onClick={() => { setHasLoaded(false); setSelectOptions([]); }} className="text-xs underline mt-1">
                     Reintentar
                 </button>
             </div>
@@ -137,95 +102,54 @@ const SelectField: React.FC<{
         );
     }
     
-    // ... el resto del código (handlers y returns) se mantiene igual
     const handleSelectChange = (selectedValue: string) => {
-        if (!isMultiple) {
-            onChange(selectedValue);
-        }
+        if (!isMultiple) onChange(selectedValue);
     };
     
     const handleMultipleSelectChange = (selectedValue: string) => {
         const selectedValues: string[] = Array.isArray(value)
             ? value.map((v) => String(v))
-            : (value !== null && value !== undefined && value !== '')
-                ? [String(value)]
-                : [];
-        
+            : (value !== null && value !== undefined && value !== '') ? [String(value)] : [];
         let values = Array.from(new Set([...selectedValues, selectedValue]));
-        
-        if (maxSelections && values.length > maxSelections) {
-            values = values.slice(0, maxSelections);
-        }
-        
+        if (maxSelections && values.length > maxSelections) values = values.slice(0, maxSelections);
         onChange(values);
     };
     
     const handleRemoveValue = (valToRemove: string) => {
         const selectedValues: string[] = Array.isArray(value)
             ? value.map((v) => String(v))
-            : (value !== null && value !== undefined && value !== '')
-                ? [String(value)]
-                : [];
-        
+            : (value !== null && value !== undefined && value !== '') ? [String(value)] : [];
         const newValues = selectedValues.filter(v => v !== valToRemove);
         onChange(newValues);
     };
     
-    const handleClearAll = () => {
-        onChange([]);
-    };
+    const handleClearAll = () => onChange([]);
     
-    // Select múltiple
     if (isMultiple) {
         const selectedValues: string[] = Array.isArray(value)
             ? value.map((v) => String(v))
-            : (value !== null && value !== undefined && value !== '')
-                ? [String(value)]
-                : [];
-        
+            : (value !== null && value !== undefined && value !== '') ? [String(value)] : [];
         return (
             <div className="space-y-2">
-                <Select
-                    value=""
-                    onValueChange={handleMultipleSelectChange}
-                >
-                    <SelectTrigger className="w-full">
-                        <SelectValue placeholder={placeholder} />
-                    </SelectTrigger>
+                <Select value="" onValueChange={handleMultipleSelectChange}>
+                    <SelectTrigger className="w-full"><SelectValue placeholder={placeholder} /></SelectTrigger>
                     <SelectContent className="max-h-60 overflow-y-auto">
                         {selectOptions.map((opt) => (
-                            <SelectItem key={opt.id} value={String(`${opt.id}`)}>
-                                {opt.id} - {opt.label}
-                            </SelectItem>
+                            <SelectItem key={opt.id} value={String(`${opt.id}`)}>{opt.id} - {opt.label}</SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
-                
                 {selectedValues.length > 0 && config.allow_clear !== false && (
-                    <button
-                        onClick={handleClearAll}
-                        className="text-xs text-muted-foreground hover:text-red-500 transition-colors"
-                    >
-                        Limpiar selección
-                    </button>
+                    <button onClick={handleClearAll} className="text-xs text-muted-foreground hover:text-red-500">Limpiar selección</button>
                 )}
-                
                 {selectedValues.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1">
                         {selectedValues.map((val: string) => {
                             const opt = selectOptions.find(o => String(o.id) === val);
                             return (
-                                <span 
-                                    key={val} 
-                                    className="bg-muted px-2 py-0.5 rounded text-xs flex items-center gap-1"
-                                >
+                                <span key={val} className="bg-muted px-2 py-0.5 rounded text-xs flex items-center gap-1">
                                     {opt?.label || val}
-                                    <button
-                                        onClick={() => handleRemoveValue(val)}
-                                        className="hover:text-red-500 ml-1"
-                                    >
-                                        ×
-                                    </button>
+                                    <button onClick={() => handleRemoveValue(val)} className="hover:text-red-500 ml-1">×</button>
                                 </span>
                             );
                         })}
@@ -235,38 +159,54 @@ const SelectField: React.FC<{
         );
     }
     
-    // Select simple
     return (
-        <Select
-            value={value ? String(value) : ""}
-            onValueChange={handleSelectChange}
-        >
-            <SelectTrigger className="w-full">
-                <SelectValue placeholder={placeholder} />
-            </SelectTrigger>
+        <Select value={value ? String(value) : ""} onValueChange={handleSelectChange}>
+            <SelectTrigger className="w-full"><SelectValue placeholder={placeholder} /></SelectTrigger>
             <SelectContent className="max-h-60 overflow-y-auto">
                 {selectOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={String(opt.value)}>
-                        {opt.label}
-                    </SelectItem>
+                    <SelectItem key={opt.value} value={String(opt.value)}>{opt.label}</SelectItem>
                 ))}
             </SelectContent>
         </Select>
     );
 };
 
-// En BlockEditor.tsx, encuentra donde está definido fetchedRef y agrega un loadedDataRef para external
-
+// Componente principal BlockEditor
 const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
-    // Memoizar los componentes ordenados
-    const sortedComponents = React.useMemo(
-        () => [...module.components].sort((a, b) => a.order - b.order),
-        [module.components]
-    );
-    
     const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
     const [errorStates, setErrorStates] = useState<Record<string, string>>({});
     const loadedExternalRef = useRef<Set<string>>(new Set());
+
+    // Ordenar componentes
+    const sortedComponents = useMemo(
+        () => [...module.components].sort((a, b) => a.order - b.order),
+        [module.components]
+    );
+
+    // 🔹 Agrupar componentes y aplicar dependencias
+    const { groups, noGroup } = useMemo(() => {
+        const groupsMap: Record<string, Component[]> = {};
+        const noGroupList: Component[] = [];
+
+        sortedComponents.forEach(comp => {
+            // Verificar dependencia: si depends_on está definido y el campo padre está vacío → omitir
+            if (comp.depends_on) {
+                const parentValue = block.values[comp.depends_on];
+                const isEmpty = !parentValue || (Array.isArray(parentValue) && parentValue.length === 0);
+                if (isEmpty) return; // No renderizar este campo
+            }
+
+            const group = comp.field_group;
+            if (group && group.trim() !== '') {
+                if (!groupsMap[group]) groupsMap[group] = [];
+                groupsMap[group].push(comp);
+            } else {
+                noGroupList.push(comp);
+            }
+        });
+
+        return { groups: groupsMap, noGroup: noGroupList };
+    }, [sortedComponents, block.values]);
 
     const toInputValue = (v: unknown): string | number => {
         if (typeof v === 'string' || typeof v === 'number') return v;
@@ -275,74 +215,44 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
 
     const fetchExternalData = useCallback(async (component: Component) => {
         if (!component.data_source) return;
-
         const fetchKey = `${component.id}-${component.name}`;
-        
-        // 👈 Verificar si ya se cargó este componente
         if (loadedExternalRef.current.has(fetchKey)) return;
-        
         const currentValue = block.values[component.name];
         if (currentValue && (Array.isArray(currentValue) && currentValue.length > 0) || 
             (typeof currentValue === 'object' && currentValue !== null && Object.keys(currentValue).length > 0)) {
             loadedExternalRef.current.add(fetchKey);
             return;
         }
-
         setLoadingStates(prev => ({ ...prev, [component.name]: true }));
         setErrorStates(prev => ({ ...prev, [component.name]: '' }));
-
         try {
             const baseUrl = import.meta.env.VITE_API_URL || '';
             const url = `${baseUrl}${component.data_source}`;
-
             const response = await fetch(url);
-
-            if (!response.ok) {
-                throw new Error(`Error ${response.status}: ${response.statusText}`);
-            }
-
+            if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
             const data = await response.json();
-            
-            // Si fue exitoso → marcar como cargado
             loadedExternalRef.current.add(fetchKey);
-
             onChange(component.name, data);
-
         } catch (error) {
-            
-            setErrorStates(prev => ({ 
-                ...prev, 
-                [component.name]: error instanceof Error ? error.message : 'Error al cargar datos' 
-            }));
-
+            setErrorStates(prev => ({ ...prev, [component.name]: error instanceof Error ? error.message : 'Error al cargar datos' }));
             loadedExternalRef.current.add(fetchKey);
-
         } finally {
             setLoadingStates(prev => ({ ...prev, [component.name]: false }));
         }
-        
     }, [block.values, onChange]);
 
-    // 👈 Usar useEffect con dependencias correctas y solo ejecutar una vez
     useEffect(() => {
         let isMounted = true;
-
         const loadExternalData = async () => {
             for (const component of module.components) {
                 if (component.type === 'external' && component.data_source && isMounted) {
                     const fetchKey = `${component.id}-${component.name}`;
-                    if (!loadedExternalRef.current.has(fetchKey)) {
-                        await fetchExternalData(component);
-                    }
+                    if (!loadedExternalRef.current.has(fetchKey)) await fetchExternalData(component);
                 }
             }
         };
-
         loadExternalData();
-
-        return () => {
-            isMounted = false;
-        };
+        return () => { isMounted = false; };
     }, [module.components, fetchExternalData]);
 
     const renderField = useCallback((component: Component) => {
@@ -363,214 +273,121 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
                         required={component.is_required}
                     />
                 );
-
             case 'color':
                 return (
                     <div className="flex gap-2">
-                        <Input
-                            type="color"
-                            id={component.name}
-                            value={typeof value === 'string' && value ? value : '#000000'}
-                            onChange={(e) => onChange(component.name, e.target.value)}
-                            className="w-12 p-1 h-10"
-                        />
-                        <Input
-                            type="text"
-                            value={toInputValue(value)}
-                            onChange={(e) => onChange(component.name, e.target.value)}
-                            placeholder="#000000"
-                            className="flex-1"
-                        />
+                        <Input type="color" value={typeof value === 'string' && value ? value : '#000000'} onChange={(e) => onChange(component.name, e.target.value)} className="w-12 p-1 h-10" />
+                        <Input type="text" value={toInputValue(value)} onChange={(e) => onChange(component.name, e.target.value)} placeholder="#000000" className="flex-1" />
                     </div>
                 );
-
             case 'select':
-                return (
-                    <SelectField
-                        component={component}
-                        value={value}
-                        onChange={(newValue) => onChange(component.name, newValue)}
-                    />
-                );
-
+                return <SelectField component={component} value={value} onChange={(newValue) => onChange(component.name, newValue)} />;
             case 'toggle':
                 return (
                     <div className="flex items-center space-x-2">
-                        <Switch
-                            id={component.name}
-                            checked={!!value}
-                            onCheckedChange={(checked) => onChange(component.name, checked)}
-                        />
+                        <Switch id={component.name} checked={!!value} onCheckedChange={(checked) => onChange(component.name, checked)} />
                         <Label htmlFor={component.name}>{component.label}</Label>
                     </div>
                 );
-
             case 'image':
                 return (
                     <div className="space-y-2">
-                        <Input
-                            type="url"
-                            id={component.name}
-                            value={toInputValue(value)}
-                            onChange={(e) => onChange(component.name, e.target.value)}
-                            placeholder={component.placeholder || 'https://example.com/image.jpg'}
-                        />
-                        {typeof value === 'string' && value && (
-                            <img
-                                src={value}
-                                alt="Preview"
-                                className="max-w-full h-32 object-cover rounded border"
-                            />
-                        )}
+                        <Input type="url" value={toInputValue(value)} onChange={(e) => onChange(component.name, e.target.value)} placeholder={component.placeholder || 'https://example.com/image.jpg'} />
+                        {typeof value === 'string' && value && <img src={value} alt="Preview" className="max-w-full h-32 object-cover rounded border" />}
                     </div>
                 );
-
             case 'external':
                 if (component.name === 'footer_columns' || component.name === 'social_networks') {
-                    const externalValue =
-                        Array.isArray(value) || typeof value === 'string' || value === null
-                            ? value
-                            : null;
-                    
-                    // Para social_networks, necesitas un editor similar
+                    const externalValue = Array.isArray(value) || typeof value === 'string' || value === null ? value : null;
                     if (component.name === 'social_networks') {
-                        // Podrías crear un SocialNetworksEditor similar
-                        // Por ahora, mostrar un placeholder
                         return (
                             <div className="text-sm border rounded bg-muted/50 p-3">
-                                <p className="text-muted-foreground text-xs">
-                                    Redes sociales configuradas desde el panel de administración
-                                </p>
-                                {value && Array.isArray(value) && value.length > 0 && (
-                                    <pre className="text-xs overflow-auto max-h-40 p-2 bg-muted rounded mt-2">
-                                        {JSON.stringify(value, null, 2)}
-                                    </pre>
-                                )}
+                                <p className="text-muted-foreground text-xs">Redes sociales configuradas desde el panel de administración</p>
+                                {value && Array.isArray(value) && value.length > 0 && <pre className="text-xs overflow-auto max-h-40 p-2 bg-muted rounded mt-2">{JSON.stringify(value, null, 2)}</pre>}
                             </div>
                         );
                     }
-                    
-                    return (
-                        <FooterEditor
-                            value={externalValue}
-                            onChange={(newValue) => onChange(component.name, newValue)}
-                        />
-                    );
+                    return <FooterEditor value={externalValue} onChange={(newValue) => onChange(component.name, newValue)} />;
                 }
-
                 return (
                     <div className="text-sm border rounded bg-muted/50">
                         {isLoading ? (
-                            <div className="flex items-center justify-center p-4">
-                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                <span>Cargando datos...</span>
-                            </div>
+                            <div className="flex items-center justify-center p-4"><Loader2 className="h-4 w-4 animate-spin mr-2" /><span>Cargando datos...</span></div>
                         ) : error ? (
                             <div className="p-4 text-red-500">
                                 <p className="font-semibold">Error al cargar datos</p>
                                 <p className="text-xs">{error}</p>
-                                <button
-                                    onClick={() => {
-                                        const fetchKey = `${component.id}-${component.name}`;
-                                        loadedExternalRef.current.delete(fetchKey);
-                                        fetchExternalData(component);
-                                    }}
-                                    className="mt-2 text-xs underline hover:no-underline"
-                                >
-                                    Reintentar
-                                </button>
+                                <button onClick={() => { const fetchKey = `${component.id}-${component.name}`; loadedExternalRef.current.delete(fetchKey); fetchExternalData(component); }} className="mt-2 text-xs underline">Reintentar</button>
                             </div>
                         ) : (
                             <div className="p-3">
                                 <div className="flex items-center justify-between mb-2">
-                                    <span className="text-muted-foreground text-xs">
-                                        Fuente: {component.data_source}
-                                    </span>
-                                    <button
-                                        onClick={() => {
-                                            const fetchKey = `${component.id}-${component.name}`;
-                                            loadedExternalRef.current.delete(fetchKey);
-                                            fetchExternalData(component);
-                                        }}
-                                        className="text-xs text-primary hover:underline"
-                                    >
-                                        Actualizar
-                                    </button>
+                                    <span className="text-muted-foreground text-xs">Fuente: {component.data_source}</span>
+                                    <button onClick={() => { const fetchKey = `${component.id}-${component.name}`; loadedExternalRef.current.delete(fetchKey); fetchExternalData(component); }} className="text-xs text-primary hover:underline">Actualizar</button>
                                 </div>
                                 {value && Array.isArray(value) && value.length > 0 ? (
-                                    <div className="space-y-2">
-                                        <p className="text-xs font-medium">
-                                            {value.length} elemento(s) cargado(s)
-                                        </p>
-                                        <pre className="text-xs overflow-auto max-h-40 p-2 bg-muted rounded">
-                                            {JSON.stringify(value, null, 2)}
-                                        </pre>
-                                    </div>
+                                    <div><p className="text-xs font-medium">{value.length} elemento(s) cargado(s)</p><pre className="text-xs overflow-auto max-h-40 p-2 bg-muted rounded">{JSON.stringify(value, null, 2)}</pre></div>
                                 ) : value && typeof value === 'object' ? (
-                                    <pre className="text-xs overflow-auto max-h-40 p-2 bg-muted rounded">
-                                        {JSON.stringify(value, null, 2)}
-                                    </pre>
+                                    <pre className="text-xs overflow-auto max-h-40 p-2 bg-muted rounded">{JSON.stringify(value, null, 2)}</pre>
                                 ) : (
-                                    <p className="text-muted-foreground text-xs italic">
-                                        No hay datos cargados. Haz clic en "Actualizar" para cargar.
-                                    </p>
+                                    <p className="text-muted-foreground text-xs italic">No hay datos cargados. Haz clic en "Actualizar" para cargar.</p>
                                 )}
                             </div>
                         )}
                     </div>
                 );
-
             case 'range': {
                 const options = component.configuration as any || { min: 0, max: 100, step: 1, unit: '' };
                 const config = typeof options === 'string' ? JSON.parse(options) : options;
-
                 return (
                     <div className="space-y-2">
                         <div className="flex items-center gap-4">
-                            <Input
-                                type="range"
-                                id={component.name}
-                                min={config.min}
-                                max={config.max}
-                                step={config.step}
-                                value={Number(value) || config.min}
-                                onChange={(e) => onChange(component.name, Number(e.target.value))}
-                                className="flex-1"
-                            />
-                            <span className="text-sm font-mono min-w-[60px]">
-                                {value}{config.unit}
-                            </span>
+                            <input type="range" id={component.name} min={config.min} max={config.max} step={config.step} value={Number(value) || config.min} onChange={(e) => onChange(component.name, Number(e.target.value))} className="flex-1" />
+                            <span className="text-sm font-mono min-w-[60px]">{value}{config.unit}</span>
                         </div>
                     </div>
                 );
             }
-
-            default:
-                return null;
+            default: return null;
         }
     }, [block.values, loadingStates, errorStates, onChange, fetchExternalData]);
 
     return (
-        <div>
-            <CardContent className="h-[calc(100vh-240px)] overflow-y-auto space-y-4 w-full">
-                {sortedComponents.map((comp) => (
-                    <div key={comp.id} className="">
-                        <Label htmlFor={comp.name}>
-                            {comp.label}
-                            {comp.is_required && <span className="text-red-500 ml-1">*</span>}
-                        </Label>
-
-                        {renderField(comp)}
-
-                        {comp.validation_rules && (
-                            <p className="text-xs text-muted-foreground">
-                                Reglas: {comp.validation_rules.join(', ')}
-                            </p>
-                        )}
-                    </div>
-                ))}
-            </CardContent>
-        </div>
+        <CardContent className="h-[calc(100vh-240px)] overflow-y-auto space-y-5 w-full p-2">
+            {/* Grupos de campos */}
+            {Object.entries(groups).map(([groupName, components]) => (
+                <div key={groupName} className="border rounded-lg p-3 bg-muted/10">
+                    <h4 className="text-sm font-semibold capitalize border-b pb-1 mb-2">
+                        {groupName.replace(/_/g, ' ')}
+                    </h4>
+                    {components.map(comp => (
+                        <div key={comp.id}>
+                            <Label htmlFor={comp.name}>
+                                {comp.label}
+                                {comp.is_required && <span className="text-red-500 ml-1">*</span>}
+                            </Label>
+                            {renderField(comp)}
+                            {/* {comp.validation_rules && (
+                                <p className="text-xs text-muted-foreground mt-1">Reglas: {comp.validation_rules.join(', ')}</p>
+                            )} */}
+                        </div>
+                    ))}
+                </div>
+            ))}
+            {/* Componentes sin grupo */}
+            {noGroup.map(comp => (
+                <div key={comp.id}>
+                    <Label htmlFor={comp.name}>
+                        {comp.label}
+                        {comp.is_required && <span className="text-red-500 ml-1">*</span>}
+                    </Label>
+                    {renderField(comp)}
+                    {/* {comp.validation_rules && (
+                        <p className="text-xs text-muted-foreground mt-1">Reglas: {comp.validation_rules.join(', ')}</p>
+                    )} */}
+                </div>
+            ))}
+        </CardContent>
     );
 };
 

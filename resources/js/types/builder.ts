@@ -20,7 +20,9 @@ export interface Component {
     order: number;
     validation_rules: string[] | null;
     data_source: string | null;
-    configuration: string[] | null; 
+    configuration: Record<string, unknown> | string | null;
+    depends_on: string | null;
+    field_group: string | null;
     options?: ComponentOption[];
 }
 

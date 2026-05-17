@@ -76,27 +76,29 @@ const FooterEditor: React.FC<Props> = ({ value, onChange }) => {
     const renderLinksColumn = (column: Column, index: number) => {
         const selectedIds = column.links || [];
         return (
-            <div className="space-y-1">
-                <Label className="text-xs">Seleccionar enlaces</Label>
+            <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Seleccionar enlaces</Label>
                 <Select onValueChange={(val) => updateColumn(index, { links: [...selectedIds, parseInt(val)] })}>
-                    <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Agregar enlace" /></SelectTrigger>
+                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Agregar enlace" /></SelectTrigger>
                     <SelectContent>
                         {menuItems?.map((item: any) => (
                             <SelectItem key={item.id} value={String(item.id)}>{item.label}</SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
-                <div className="flex flex-wrap gap-1 mt-1">
-                    {selectedIds.map(id => {
-                        const item = menuItems?.find((i: any) => i.id === id);
-                        return (
-                            <span key={id} className="bg-muted px-1.5 py-0.5 rounded text-xs flex items-center gap-1">
-                                {item?.label || id}
-                                <button onClick={() => updateColumn(index, { links: selectedIds.filter(i => i !== id) })} className="text-red-500 text-xs font-bold">×</button>
-                            </span>
-                        );
-                    })}
-                </div>
+                {selectedIds.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                        {selectedIds.map(id => {
+                            const item = menuItems?.find((i: any) => i.id === id);
+                            return (
+                                <span key={id} className="bg-muted px-2 py-0.5 rounded text-xs flex items-center gap-1">
+                                    {item?.label || id}
+                                    <button onClick={() => updateColumn(index, { links: selectedIds.filter(i => i !== id) })} className="text-red-500 font-bold">×</button>
+                                </span>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
         );
     };
@@ -104,16 +106,16 @@ const FooterEditor: React.FC<Props> = ({ value, onChange }) => {
     const renderSocialColumn = (column: Column, index: number) => {
         const socials = column.socials || [];
         return (
-            <div className="space-y-1">
-                <Label className="text-xs">Redes sociales</Label>
+            <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Redes sociales</Label>
                 {socials.map((social, sIdx) => (
-                    <div key={sIdx} className="flex gap-1 items-center mb-1">
+                    <div key={sIdx} className="flex gap-2 items-center mb-1">
                         <Select value={social.platform} onValueChange={(val) => {
                             const newSocials = [...socials];
                             newSocials[sIdx] = { ...social, platform: val };
                             updateColumn(index, { socials: newSocials });
                         }}>
-                            <SelectTrigger className="w-24 h-7 text-xs"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="w-[100px] h-8 text-xs"><SelectValue /></SelectTrigger>
                             <SelectContent>
                                 {socialPlatforms.map(p => (
                                     <SelectItem key={p.value} value={p.value}>
@@ -130,14 +132,14 @@ const FooterEditor: React.FC<Props> = ({ value, onChange }) => {
                                 updateColumn(index, { socials: newSocials });
                             }}
                             placeholder="URL"
-                            className="flex-1 h-7 text-xs"
+                            className="flex-1 h-8 text-xs"
                         />
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateColumn(index, { socials: socials.filter((_, i) => i !== sIdx) })}>
-                            <Trash2 className="h-3 w-3" />
+                        <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => updateColumn(index, { socials: socials.filter((_, i) => i !== sIdx) })}>
+                            <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                     </div>
                 ))}
-                <Button variant="outline" size="sm" className="h-6 text-xs mt-1" onClick={() => updateColumn(index, { socials: [...socials, { platform: 'facebook', url: '' }] })}>
+                <Button variant="outline" size="sm" className="h-7 text-xs mt-1" onClick={() => updateColumn(index, { socials: [...socials, { platform: 'facebook', url: '' }] })}>
                     <Plus className="h-3 w-3 mr-1" /> Agregar red
                 </Button>
             </div>
@@ -148,40 +150,40 @@ const FooterEditor: React.FC<Props> = ({ value, onChange }) => {
         const contact = column.contact || {};
         const phones = contact.phones || [];
         return (
-            <div className="space-y-1">
+            <div className="space-y-1.5">
                 <div>
-                    <Label className="text-xs">Teléfonos</Label>
+                    <Label className="text-xs text-muted-foreground">Teléfonos</Label>
                     {phones.map((phone, pIdx) => (
-                        <div key={pIdx} className="flex gap-1 mt-1">
+                        <div key={pIdx} className="flex gap-2 mt-1">
                             <Input value={phone} onChange={e => {
                                 const newPhones = [...phones];
                                 newPhones[pIdx] = e.target.value;
                                 updateColumn(index, { contact: { ...contact, phones: newPhones } });
-                            }} className="flex-1 h-7 text-xs" />
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateColumn(index, { contact: { ...contact, phones: phones.filter((_, i) => i !== pIdx) } })}>
-                                <Trash2 className="h-3 w-3" />
+                            }} className="flex-1 h-8 text-xs" />
+                            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => updateColumn(index, { contact: { ...contact, phones: phones.filter((_, i) => i !== pIdx) } })}>
+                                <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                         </div>
                     ))}
-                    <Button variant="outline" size="sm" className="h-6 text-xs mt-1" onClick={() => updateColumn(index, { contact: { ...contact, phones: [...phones, ''] } })}>
+                    <Button variant="outline" size="sm" className="h-7 text-xs mt-1" onClick={() => updateColumn(index, { contact: { ...contact, phones: [...phones, ''] } })}>
                         <Plus className="h-3 w-3 mr-1" /> Agregar teléfono
                     </Button>
                 </div>
                 <div>
-                    <Label className="text-xs">Email</Label>
-                    <Input value={contact.email || ''} onChange={e => updateColumn(index, { contact: { ...contact, email: e.target.value } })} className="h-7 text-xs" />
+                    <Label className="text-xs text-muted-foreground">Email</Label>
+                    <Input value={contact.email || ''} onChange={e => updateColumn(index, { contact: { ...contact, email: e.target.value } })} className="h-8 text-xs" />
                 </div>
                 <div>
-                    <Label className="text-xs">Dirección</Label>
-                    <Input value={contact.address || ''} onChange={e => updateColumn(index, { contact: { ...contact, address: e.target.value } })} className="h-7 text-xs" />
+                    <Label className="text-xs text-muted-foreground">Dirección</Label>
+                    <Input value={contact.address || ''} onChange={e => updateColumn(index, { contact: { ...contact, address: e.target.value } })} className="h-8 text-xs" />
                 </div>
                 <div>
-                    <Label className="text-xs">WhatsApp</Label>
-                    <Input value={contact.whatsapp || ''} onChange={e => updateColumn(index, { contact: { ...contact, whatsapp: e.target.value } })} className="h-7 text-xs" placeholder="+1234567890" />
+                    <Label className="text-xs text-muted-foreground">WhatsApp</Label>
+                    <Input value={contact.whatsapp || ''} onChange={e => updateColumn(index, { contact: { ...contact, whatsapp: e.target.value } })} className="h-8 text-xs" placeholder="+1234567890" />
                 </div>
                 <div>
-                    <Label className="text-xs">Mensaje WhatsApp</Label>
-                    <Input value={contact.whatsapp_message || ''} onChange={e => updateColumn(index, { contact: { ...contact, whatsapp_message: e.target.value } })} className="h-7 text-xs" />
+                    <Label className="text-xs text-muted-foreground">Mensaje WhatsApp</Label>
+                    <Input value={contact.whatsapp_message || ''} onChange={e => updateColumn(index, { contact: { ...contact, whatsapp_message: e.target.value } })} className="h-8 text-xs" />
                 </div>
             </div>
         );
@@ -189,29 +191,29 @@ const FooterEditor: React.FC<Props> = ({ value, onChange }) => {
 
     const renderFreeTextColumn = (column: Column, index: number) => {
         return (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
                 <div>
-                    <Label className="text-xs">Contenido (HTML básico)</Label>
+                    <Label className="text-xs text-muted-foreground">Contenido (HTML básico)</Label>
                     <textarea
                         value={column.content || ''}
                         onChange={e => updateColumn(index, { content: e.target.value })}
                         rows={3}
-                        className="w-full rounded-md border border-input bg-background px-2 py-1 text-xs ring-offset-background focus-visible:outline-none focus-visible:ring-1 font-mono"
+                        className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-xs ring-offset-background focus-visible:outline-none focus-visible:ring-1 font-mono"
                         placeholder="<p>Texto</p><ul><li>Item</li></ul>"
                     />
                 </div>
                 <div>
-                    <Label className="text-xs">URL imagen (opcional)</Label>
-                    <Input value={column.image_url || ''} onChange={e => updateColumn(index, { image_url: e.target.value })} placeholder="https://" className="h-7 text-xs" />
+                    <Label className="text-xs text-muted-foreground">URL imagen (opcional)</Label>
+                    <Input value={column.image_url || ''} onChange={e => updateColumn(index, { image_url: e.target.value })} placeholder="https://" className="h-8 text-xs" />
                 </div>
                 <div>
-                    <Label className="text-xs">Texto alternativo</Label>
-                    <Input value={column.image_alt || ''} onChange={e => updateColumn(index, { image_alt: e.target.value })} className="h-7 text-xs" />
+                    <Label className="text-xs text-muted-foreground">Texto alternativo</Label>
+                    <Input value={column.image_alt || ''} onChange={e => updateColumn(index, { image_alt: e.target.value })} className="h-8 text-xs" />
                 </div>
                 <div>
-                    <Label className="text-xs">Posición imagen</Label>
+                    <Label className="text-xs text-muted-foreground">Posición imagen</Label>
                     <Select value={column.image_position || 'top'} onValueChange={(val: any) => updateColumn(index, { image_position: val })}>
-                        <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="top">Arriba</SelectItem>
                             <SelectItem value="left">Izquierda</SelectItem>
@@ -224,22 +226,22 @@ const FooterEditor: React.FC<Props> = ({ value, onChange }) => {
     };
 
     return (
-        <div className="space-y-2">
+        <div className="space-y-3">
             {columns.map((column, index) => (
-                <Card key={column.id} className="border shadow-sm overflow-hidden gap-1">
-                    {/* Encabezado compacto */}
-                    <div className="bg-muted/20 px-2 py-1 border-b flex flex-wrap items-center justify-between gap-1">
-                        <div className="flex-1 min-w-[120px]">
+                <Card key={column.id} className="border shadow-sm overflow-hidden">
+                    {/* Encabezado de la tarjeta */}
+                    <div className="bg-muted/20 px-3 py-2 border-b flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <div className="flex-1 min-w-0">
                             <Input
                                 value={column.title}
                                 onChange={e => updateColumn(index, { title: e.target.value })}
-                                className="h-8 text-xs font-medium"
-                                placeholder="Título"
+                                className="h-8 text-sm font-medium"
+                                placeholder="Título de la columna"
                             />
                         </div>
-                        <div className="flex items-center gap-1 min-w-[150px]">
+                        <div className="flex items-center gap-2 shrink-0">
                             <Select value={column.type} onValueChange={(val: any) => updateColumn(index, { type: val })}>
-                                <SelectTrigger className="w-[500px] h-7 text-xs">
+                                <SelectTrigger className="w-[130px] h-8 text-xs">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -249,14 +251,14 @@ const FooterEditor: React.FC<Props> = ({ value, onChange }) => {
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-7 w-7 text-red-500 hover:text-red-700"
+                                className="h-8 w-8 text-red-500 hover:text-red-700"
                                 onClick={() => removeColumn(index)}
                             >
-                                <Trash2 className="h-3.5 w-3.5" />
+                                <Trash2 className="h-4 w-4" />
                             </Button>
                         </div>
                     </div>
-                    <CardContent className="pt-0">
+                    <CardContent className="pt-3 pb-3">
                         {column.type === 'links' && renderLinksColumn(column, index)}
                         {column.type === 'social' && renderSocialColumn(column, index)}
                         {column.type === 'contact' && renderContactColumn(column, index)}
@@ -265,8 +267,8 @@ const FooterEditor: React.FC<Props> = ({ value, onChange }) => {
                 </Card>
             ))}
             {columns.length < 5 && (
-                <Button onClick={addColumn} variant="outline" size="sm" className="w-full h-7 text-xs">
-                    <Plus className="h-3 w-3 mr-1" /> Agregar columna ({columns.length}/5)
+                <Button onClick={addColumn} variant="outline" size="sm" className="w-full h-8 text-xs">
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Agregar columna ({columns.length}/5)
                 </Button>
             )}
         </div>
