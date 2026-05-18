@@ -1,5 +1,5 @@
 // lib/blockUtils.ts
-import { Component, Block, Module } from '@/types/builder';
+import { Component, Block, Module, BlockDefinition } from '@/types/builder';
 
 /**
  * Crea un objeto de valores por defecto para un módulo
@@ -26,15 +26,27 @@ export function getDefaultValuesForModule(module: Module): Record<string, any> {
 /**
  * Crea un nuevo bloque a partir de un módulo
  */
-export function createBlockFromModule(module: Module, order: number): Block {
+export const createBlockFromModule = (module: Module, order: number): Block => {
     return {
-        module_id: module.id,
-        module_slug: module.slug,
-        module_name: module.name,
         order,
-        values: getDefaultValuesForModule(module),
+        type: 'section',
+        module_id: module.id,
+        definition_slug: module.slug,
+        values: {},
+        children: [],
     };
-}
+};
+
+export const createBlockFromDefinition = (definition: BlockDefinition, order: number): Block => {
+    return {
+        order,
+        type: 'block',
+        block_definition_id: definition.id,
+        definition_slug: definition.slug,
+        values: {},
+        children: definition.is_container ? [] : undefined,
+    };
+};
 
 /**
  * Agrupa componentes por tipo para renderizado ordenado

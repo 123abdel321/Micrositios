@@ -5,12 +5,13 @@ import AppLayout from '@/layouts/app-layout';
 import Builder, { BuilderRef } from '@/components/builder/Builder';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import type { Module, Landing } from '@/types/builder';
+import type { Module, Landing, BlockDefinition } from '@/types/builder';
 import type { BreadcrumbItem } from '@/types';
 
 interface Props {
     modules: Module[];
     landing: Landing;
+    blockDefinitions: BlockDefinition[];   // ← AGREGADO
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -19,12 +20,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Construir Landing', href: '#' },
 ];
 
-export default function Edit({ modules, landing }: Props) {
+export default function Edit({ modules, landing, blockDefinitions }: Props) {  // ← RECIBE blockDefinitions
     const [isSaving, setIsSaving] = useState(false);
     const builderRef = useRef<BuilderRef>(null);
 
     const handleSave = async () => {
-        // Obtener los bloques actuales desde el componente Builder
         const blocks = builderRef.current?.getBlocks() || [];
         const payload: Record<string, FormDataConvertible> = {
             blocks: blocks as unknown as FormDataConvertible,
@@ -59,6 +59,7 @@ export default function Edit({ modules, landing }: Props) {
                 <Builder
                     ref={builderRef}
                     modules={modules}
+                    blockDefinitions={blockDefinitions}   // ← PASAMOS blockDefinitions
                     landing={landing}
                 />
             </div>

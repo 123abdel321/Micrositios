@@ -32,6 +32,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/empresas-select', 'selectEmpresa')->name('empresas.select');
     });
 
+    
+
     // Builder de landings (con conexión a BD de la empresa)
     Route::group(['middleware' => ['client_connection']], function () {
         Route::inertia('dashboard', 'dashboard')->name('dashboard');
@@ -51,6 +53,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('/builder/{landing}/blocks/{block}', 'update')->name('blocks.update');
             Route::delete('/builder/{landing}/blocks/{block}', 'destroy')->name('blocks.destroy');
             Route::post('/builder/{landing}/blocks/reorder', 'reorder')->name('blocks.reorder');
+            Route::post('/builder/{landing}/blocks/{block}/move', 'move')->name('blocks.move');
         });
     });
 });

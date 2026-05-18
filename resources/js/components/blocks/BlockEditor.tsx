@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
-import { Block, Module, Component } from '@/types/builder';
+import { Block, Module, Component, BlockDefinition } from '@/types/builder';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -12,11 +12,10 @@ import apiClient from '@/utils/api';
 
 interface Props {
     block: Block;
-    module: Module;
+    definition: Module | BlockDefinition; // ← correcto
     onChange: (fieldName: string, value: any) => void;
 }
 
-// Componente SelectField con caché (sin cambios, solo se usa igual)
 const SelectField: React.FC<{
     component: Component;
     value: any;
@@ -171,31 +170,28 @@ const SelectField: React.FC<{
     );
 };
 
-// Componente principal BlockEditor
-const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
+const BlockEditor: React.FC<Props> = ({ block, definition, onChange }) => {
     const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
     const [errorStates, setErrorStates] = useState<Record<string, string>>({});
     const loadedExternalRef = useRef<Set<string>>(new Set());
 
-    // Ordenar componentes
+    // Ordenar componentes (usando definition.components)
     const sortedComponents = useMemo(
-        () => [...module.components].sort((a, b) => a.order - b.order),
-        [module.components]
+        () => [...definition.components].sort((a, b) => a.order - b.order),
+        [definition.components]
     );
 
-    // 🔹 Agrupar componentes y aplicar dependencias
+    // Agrupar componentes y aplicar dependencias
     const { groups, noGroup } = useMemo(() => {
         const groupsMap: Record<string, Component[]> = {};
         const noGroupList: Component[] = [];
 
         sortedComponents.forEach(comp => {
-            // Verificar dependencia: si depends_on está definido y el campo padre está vacío → omitir
             if (comp.depends_on) {
                 const parentValue = block.values[comp.depends_on];
                 const isEmpty = !parentValue || (Array.isArray(parentValue) && parentValue.length === 0);
-                if (isEmpty) return; // No renderizar este campo
+                if (isEmpty) return;
             }
-
             const group = comp.field_group;
             if (group && group.trim() !== '') {
                 if (!groupsMap[group]) groupsMap[group] = [];
@@ -204,14 +200,10 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
                 noGroupList.push(comp);
             }
         });
-
         return { groups: groupsMap, noGroup: noGroupList };
     }, [sortedComponents, block.values]);
 
-    const toInputValue = (v: unknown): string | number => {
-        if (typeof v === 'string' || typeof v === 'number') return v;
-        return '';
-    };
+    const toInputValue = (v: unknown): string | number => (typeof v === 'string' || typeof v === 'number') ? v : '';
 
     const fetchExternalData = useCallback(async (component: Component) => {
         if (!component.data_source) return;
@@ -244,7 +236,7 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
     useEffect(() => {
         let isMounted = true;
         const loadExternalData = async () => {
-            for (const component of module.components) {
+            for (const component of definition.components) {
                 if (component.type === 'external' && component.data_source && isMounted) {
                     const fetchKey = `${component.id}-${component.name}`;
                     if (!loadedExternalRef.current.has(fetchKey)) await fetchExternalData(component);
@@ -253,99 +245,38 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
         };
         loadExternalData();
         return () => { isMounted = false; };
-    }, [module.components, fetchExternalData]);
+    }, [definition.components, fetchExternalData]);
 
     const renderField = useCallback((component: Component) => {
         const value = block.values[component.name] ?? '';
         const isLoading = loadingStates[component.name];
         const error = errorStates[component.name];
-
         switch (component.type) {
             case 'text':
             case 'number':
-                return (
-                    <Input
-                        type={component.type}
-                        id={component.name}
-                        value={toInputValue(value)}
-                        onChange={(e) => onChange(component.name, e.target.value)}
-                        placeholder={component.placeholder || undefined}
-                        required={component.is_required}
-                    />
-                );
+                return <Input type={component.type} value={toInputValue(value)} onChange={e => onChange(component.name, e.target.value)} placeholder={component.placeholder || undefined} required={component.is_required} />;
             case 'color':
-                return (
-                    <div className="flex gap-2">
-                        <Input type="color" value={typeof value === 'string' && value ? value : '#000000'} onChange={(e) => onChange(component.name, e.target.value)} className="w-12 p-1 h-10" />
-                        <Input type="text" value={toInputValue(value)} onChange={(e) => onChange(component.name, e.target.value)} placeholder="#000000" className="flex-1" />
-                    </div>
-                );
+                return <div className="flex gap-2"><Input type="color" value={typeof value === 'string' && value ? value : '#000000'} onChange={e => onChange(component.name, e.target.value)} className="w-12 p-1 h-10" /><Input type="text" value={toInputValue(value)} onChange={e => onChange(component.name, e.target.value)} placeholder="#000000" className="flex-1" /></div>;
             case 'select':
-                return <SelectField component={component} value={value} onChange={(newValue) => onChange(component.name, newValue)} />;
+                return <SelectField component={component} value={value} onChange={newValue => onChange(component.name, newValue)} />;
             case 'toggle':
-                return (
-                    <div className="flex items-center space-x-2">
-                        <Switch id={component.name} checked={!!value} onCheckedChange={(checked) => onChange(component.name, checked)} />
-                    </div>
-                );
+                return <Switch checked={!!value} onCheckedChange={checked => onChange(component.name, checked)} />;
             case 'image':
-                return (
-                    <div className="space-y-2">
-                        <Input type="url" value={toInputValue(value)} onChange={(e) => onChange(component.name, e.target.value)} placeholder={component.placeholder || 'https://example.com/image.jpg'} />
-                        {typeof value === 'string' && value && <img src={value} alt="Preview" className="max-w-full h-32 object-cover rounded border" />}
-                    </div>
-                );
+                return <div className="space-y-2"><Input type="url" value={toInputValue(value)} onChange={e => onChange(component.name, e.target.value)} placeholder={component.placeholder || 'https://example.com/image.jpg'} />{typeof value === 'string' && value && <img src={value} alt="Preview" className="max-w-full h-32 object-cover rounded border" />}</div>;
             case 'external':
-                if (component.name === 'footer_columns' || component.name === 'social_networks') {
-                    const externalValue = Array.isArray(value) || typeof value === 'string' || value === null ? value : null;
-                    if (component.name === 'social_networks') {
-                        return (
-                            <div className="text-sm border rounded bg-muted/50 p-3">
-                                <p className="text-muted-foreground text-xs">Redes sociales configuradas desde el panel de administración</p>
-                                {value && Array.isArray(value) && value.length > 0 && <pre className="text-xs overflow-auto max-h-40 p-2 bg-muted rounded mt-2">{JSON.stringify(value, null, 2)}</pre>}
-                            </div>
-                        );
-                    }
-                    return <FooterEditor value={externalValue} onChange={(newValue) => onChange(component.name, newValue)} />;
+                if (component.name === 'footer_columns') {
+                    return <FooterEditor value={Array.isArray(value) || typeof value === 'string' || value === null ? value : null} onChange={newValue => onChange(component.name, newValue)} />;
                 }
                 return (
                     <div className="text-sm border rounded bg-muted/50">
-                        {isLoading ? (
-                            <div className="flex items-center justify-center p-4"><Loader2 className="h-4 w-4 animate-spin mr-2" /><span>Cargando datos...</span></div>
-                        ) : error ? (
-                            <div className="p-4 text-red-500">
-                                <p className="font-semibold">Error al cargar datos</p>
-                                <p className="text-xs">{error}</p>
-                                <button onClick={() => { const fetchKey = `${component.id}-${component.name}`; loadedExternalRef.current.delete(fetchKey); fetchExternalData(component); }} className="mt-2 text-xs underline">Reintentar</button>
-                            </div>
-                        ) : (
-                            <div className="p-3">
-                                <div className="flex items-center justify-between mb-2">
-                                    <span className="text-muted-foreground text-xs">Fuente: {component.data_source}</span>
-                                    <button onClick={() => { const fetchKey = `${component.id}-${component.name}`; loadedExternalRef.current.delete(fetchKey); fetchExternalData(component); }} className="text-xs text-primary hover:underline">Actualizar</button>
-                                </div>
-                                {value && Array.isArray(value) && value.length > 0 ? (
-                                    <div><p className="text-xs font-medium">{value.length} elemento(s) cargado(s)</p><pre className="text-xs overflow-auto max-h-40 p-2 bg-muted rounded">{JSON.stringify(value, null, 2)}</pre></div>
-                                ) : value && typeof value === 'object' ? (
-                                    <pre className="text-xs overflow-auto max-h-40 p-2 bg-muted rounded">{JSON.stringify(value, null, 2)}</pre>
-                                ) : (
-                                    <p className="text-muted-foreground text-xs italic">No hay datos cargados. Haz clic en "Actualizar" para cargar.</p>
-                                )}
-                            </div>
-                        )}
+                        {isLoading ? <div className="flex items-center justify-center p-4"><Loader2 className="h-4 w-4 animate-spin mr-2" />Cargando...</div> :
+                         error ? <div className="p-4 text-red-500"><p>{error}</p><button onClick={() => { const key = `${component.id}-${component.name}`; loadedExternalRef.current.delete(key); fetchExternalData(component); }} className="text-xs underline">Reintentar</button></div> :
+                         <div className="p-3">{value ? <pre className="text-xs overflow-auto max-h-40 p-2 bg-muted rounded">{JSON.stringify(value, null, 2)}</pre> : <p className="text-xs italic">Sin datos</p>}</div>}
                     </div>
                 );
             case 'range': {
-                const options = component.configuration as any || { min: 0, max: 100, step: 1, unit: '' };
-                const config = typeof options === 'string' ? JSON.parse(options) : options;
-                return (
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-4">
-                            <input type="range" id={component.name} min={config.min} max={config.max} step={config.step} value={Number(value) || config.min} onChange={(e) => onChange(component.name, Number(e.target.value))} className="flex-1" />
-                            <span className="text-sm font-mono min-w-[60px]">{value}{config.unit}</span>
-                        </div>
-                    </div>
-                );
+                const config = (component.configuration as any) || { min: 0, max: 100, step: 1, unit: '' };
+                return <div className="flex items-center gap-4"><input type="range" min={config.min} max={config.max} step={config.step} value={Number(value) || config.min} onChange={e => onChange(component.name, Number(e.target.value))} className="flex-1" /><span className="text-sm font-mono min-w-[60px]">{value}{config.unit}</span></div>;
             }
             default: return null;
         }
@@ -353,39 +284,13 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
 
     return (
         <CardContent className="h-[calc(100vh-240px)] overflow-y-auto space-y-5 w-full p-2 py-5">
-            {/* Grupos de campos */}
-            {Object.entries(groups).map(([groupName, components]) => (
+            {Object.entries(groups).map(([groupName, comps]) => (
                 <div key={groupName} className="border rounded-lg p-3 bg-muted/10">
-                    <h4 className="text-sm font-semibold capitalize border-b pb-1 mb-2">
-                        {groupName.replace(/_/g, ' ')}
-                    </h4>
-                    {components.map(comp => (
-                        <div key={comp.id}>
-                            <Label htmlFor={comp.name}>
-                                {comp.label}
-                                {comp.is_required && <span className="text-red-500 ml-1">*</span>}
-                            </Label>
-                            {renderField(comp)}
-                            {/* {comp.validation_rules && (
-                                <p className="text-xs text-muted-foreground mt-1">Reglas: {comp.validation_rules.join(', ')}</p>
-                            )} */}
-                        </div>
-                    ))}
+                    <h4 className="text-sm font-semibold capitalize border-b pb-1 mb-2">{groupName.replace(/_/g, ' ')}</h4>
+                    {comps.map(comp => <div key={comp.id}><Label>{comp.label}{comp.is_required && <span className="text-red-500 ml-1">*</span>}</Label>{renderField(comp)}</div>)}
                 </div>
             ))}
-            {/* Componentes sin grupo */}
-            {noGroup.map(comp => (
-                <div key={comp.id}>
-                    <Label htmlFor={comp.name}>
-                        {comp.label}
-                        {comp.is_required && <span className="text-red-500 ml-1">*</span>}
-                    </Label>
-                    {renderField(comp)}
-                    {/* {comp.validation_rules && (
-                        <p className="text-xs text-muted-foreground mt-1">Reglas: {comp.validation_rules.join(', ')}</p>
-                    )} */}
-                </div>
-            ))}
+            {noGroup.map(comp => <div key={comp.id}><Label>{comp.label}{comp.is_required && <span className="text-red-500 ml-1">*</span>}</Label>{renderField(comp)}</div>)}
         </CardContent>
     );
 };

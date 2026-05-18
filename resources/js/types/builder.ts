@@ -1,5 +1,5 @@
 // types/builder.ts
-export type BlockValue = string | number | boolean | null;
+export type BlockValue = string | number | boolean | null | Record<string, any>;
 export type BlockValues = Record<string, BlockValue>;
 
 export interface ComponentOption {
@@ -34,13 +34,30 @@ export interface Module {
     components: Component[];
 }
 
+export interface BlockDefinition {
+    id: number;
+    name: string;
+    slug: string;
+    description: string;
+    icon: string | null;
+    is_container: boolean;
+    max_children: number | null;
+    components: Component[];
+}
+
 export interface Block {
     id?: number;
     order: number;
-    module_id: number;
-    module_slug: string;
-    module_name?: string;
+    type: 'section' | 'block';
+    module_id?: number;       // solo para secciones
+    block_definition_id?: number; // solo para bloques
+    parent_id?: number | null;
+    children?: Block[];
     values: BlockValues;
+    module_slug: string; // para facilitar acceso a los componentes, se llena al cargar el landing
+    definition_slug?: string; // slug del módulo o block_definition
+    // Datos de UI
+    _isNew?: boolean;
 }
 
 export interface Landing {
@@ -50,7 +67,7 @@ export interface Landing {
     is_active: boolean;
     is_principal: boolean;
     user_id: number;
-    blocks: Block[];
+    blocks: Block[];      // raíces (parent_id = null)
     created_at: string;
     updated_at: string;
 }

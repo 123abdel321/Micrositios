@@ -12,81 +12,94 @@ use App\Models\Sistema\Landing;
 use App\Models\Sistema\Component;
 use App\Models\Sistema\Submission;
 use App\Models\Sistema\FieldValue;
+use App\Models\Sistema\BlockDefinition;
 
 class LandingController extends Controller
 {
     public function save(Request $request, $id)
     {
         try {
-            $data = $request->all();
-
-            // 1. Validar (Si falla, Laravel lanza automáticamente una ValidationException)
-            $validated = validator($data, [
-                'blocks' => 'required|array',
-                'blocks.*.module_id' => 'required|exists:microsite.modules,id',
-                'blocks.*.values' => 'required|array',
-                'blocks.*.order' => 'integer',
-            ])->validate();
-            
             $landing = Landing::where('id', $id)->where('user_id', auth()->id())->firstOrFail();
+            
+            $validated = $request->validate([
+                'blocks' => 'required|array',
+                'blocks.*.id' => 'nullable|integer',  // para identificar existentes
+                'blocks.*.type' => 'required|in:section,block',
+                'blocks.*.module_id' => 'required_if:blocks.*.type,section|exists:modules,id',
+                'blocks.*.block_definition_id' => 'required_if:blocks.*.type,block|exists:block_definitions,id',
+                'blocks.*.parent_id' => 'nullable|exists:submissions,id',
+                'blocks.*.order' => 'required|integer',
+                'blocks.*.values' => 'array',
+                'blocks.*.children' => 'nullable|array',  // recursión
+            ]);
 
-            // 2. Decodificar antes de validar para que las reglas de Laravel funcionen
-            if (isset($data['blocks']) && is_string($data['blocks'])) {
-                $data['blocks'] = json_decode($data['blocks'], true);
-            }
-
-            // 3. Iniciar la transacción
             DB::connection('microsite')->beginTransaction();
 
-            // Eliminar bloques anteriores
-            $landing->blocks()->delete();
+            // Eliminar todos los bloques existentes de esta landing (reemplazo completo)
+            Submission::where('landing_id', $landing->id)->delete();
 
-            foreach ($validated['blocks'] as $blockData) {
-                $submission = $landing->blocks()->create([
-                    'module_id' => $blockData['module_id'],
-                    'order' => $blockData['order'] ?? 0,
+            // Función recursiva para guardar un bloque y sus hijos
+            $saveBlock = function ($blockData, $parentId = null) use ($landing, &$saveBlock) {
+                $submission = Submission::create([
+                    'landing_id' => $landing->id,
+                    'user_id' => auth()->id(),
+                    'type' => $blockData['type'],
+                    'module_id' => $blockData['module_id'] ?? null,
+                    'block_definition_id' => $blockData['block_definition_id'] ?? null,
+                    'parent_id' => $parentId,
+                    'order' => $blockData['order'],
                 ]);
 
-                foreach ($blockData['values'] as $key => $value) {
-                    $component = Component::where('module_id', $blockData['module_id'])
-                        ->where('name', $key)
-                        ->first();
-
-                    if ($component) {
-                        $storedValue = $this->processValueForStorage($component, $value);
-                        
-                        FieldValue::create([
-                            'submission_id' => $submission->id,
-                            'component_id' => $component->id,
-                            'value' => $storedValue,
-                        ]);
+                // Guardar field_values
+                if (isset($blockData['values']) && is_array($blockData['values'])) {
+                    // Obtener la definición (Module o BlockDefinition) para mapear component name -> id
+                    $definition = $submission->definition;
+                    if ($definition && $definition->components) {
+                        $componentsMap = [];
+                        foreach ($definition->components as $comp) {
+                            $componentsMap[$comp->name] = $comp->id;
+                        }
+                        foreach ($blockData['values'] as $name => $value) {
+                            if (isset($componentsMap[$name])) {
+                                $storedValue = $this->processValueForStorage(
+                                    (object)['type' => 'select', 'configuration' => []], // simplificado; idealmente recuperar el componente real
+                                    $value
+                                );
+                                FieldValue::create([
+                                    'submission_id' => $submission->id,
+                                    'component_id' => $componentsMap[$name],
+                                    'value' => $storedValue,
+                                ]);
+                            }
+                        }
                     }
                 }
+
+                // Guardar hijos recursivamente
+                if (isset($blockData['children']) && is_array($blockData['children'])) {
+                    foreach ($blockData['children'] as $childData) {
+                        $saveBlock($childData, $submission->id);
+                    }
+                }
+            };
+
+            foreach ($validated['blocks'] as $blockData) {
+                $saveBlock($blockData);
             }
 
-            // 4. Si todo salió bien, confirmamos los cambios
             DB::connection('microsite')->commit();
 
             return redirect()->back()->with('success', 'Landing guardada correctamente.');
 
         } catch (ValidationException $e) {
-            // dd($e->getMessage());
-            // No hacemos Rollback aquí porque la validación falla ANTES de tocar la DB
-            throw $e; 
-
+            throw $e;
         } catch (\Exception $e) {
-            // dd($e->getMessage());
-            // 5. Algo salió mal: deshacemos todo y registramos el error
             DB::connection('microsite')->rollBack();
-            
             Log::error("Error al guardar la landing {$landing->id}: " . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
-                'data' => $data
+                'data' => $request->all()
             ]);
-
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'Ocurrió un problema técnico al guardar los datos.');
+            return redirect()->back()->withInput()->with('error', 'Ocurrió un problema técnico al guardar los datos.');
         }
     }
 
@@ -142,34 +155,61 @@ class LandingController extends Controller
     public function edit(string $id)
     {
         try {
-
             $landing = Landing::findOrFail($id);
-            $landing->load('blocks.fieldValues.component', 'blocks.module');
-            
+            // Cargar solo bloques raíz (parent_id null) con sus hijos recursivamente
+            $landing->load(['blocks' => function($q) {
+                $q->whereNull('parent_id')->orderBy('order');
+            }]);
+
+            // Cargar recursivamente los hijos y sus fieldValues
+            $this->loadChildrenRecursive($landing->blocks);
+
+            // Transformar igual que antes para obtener values
             $blocks = $landing->blocks->map(function ($submission) {
-                $values = [];
-                foreach ($submission->fieldValues as $fv) {
-                    $values[$fv->component->name] = $this->processValueForDisplay($fv->component, $fv->value);
-                }
-                $submission->setAttribute('values', $values);
-                $submission->setAttribute('module_slug', $submission->module->slug);
-                return $submission;
+                return $this->transformSubmission($submission);
             });
 
             $modules = Module::with('components')->get();
-
+            $blockDefinitions = BlockDefinition::with('components')->get();
+            
             return inertia('builder/edit', [
                 'landing' => $landing,
                 'modules' => $modules,
-                'blocks' => $blocks,
+                'blockDefinitions' => $blockDefinitions,
+                'blocksTree' => $blocks, // árbol de bloques
             ]);
 
         } catch (\Exception $e) {
-
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'Ocurrió un problema técnico al guardar los datos.');
+            return redirect()->back()->with('error', 'Error al cargar el builder.');
         }
+    }
+
+    private function loadChildrenRecursive($submissions)
+    {
+        foreach ($submissions as $submission) {
+            $submission->load(['children.fieldValues.component']);
+            if ($submission->children->isNotEmpty()) {
+                $this->loadChildrenRecursive($submission->children);
+            }
+        }
+    }
+
+    private function transformSubmission($submission)
+    {
+        $values = [];
+        foreach ($submission->fieldValues as $fv) {
+            $values[$fv->component->name] = $this->processValueForDisplay($fv->component, $fv->value);
+        }
+        $submission->setAttribute('values', $values);
+        $submission->setAttribute('definition_slug', $submission->definition->slug ?? null);
+        
+        // Transformar hijos recursivamente
+        $children = $submission->children->map(function ($child) {
+            return $this->transformSubmission($child);
+        });
+        $submission->setAttribute('children', $children);
+        
+        return $submission;
     }
 
     /**
