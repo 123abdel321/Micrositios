@@ -286,7 +286,6 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
                 return (
                     <div className="flex items-center space-x-2">
                         <Switch id={component.name} checked={!!value} onCheckedChange={(checked) => onChange(component.name, checked)} />
-                        <Label htmlFor={component.name}>{component.label}</Label>
                     </div>
                 );
             case 'image':
@@ -353,7 +352,7 @@ const BlockEditor: React.FC<Props> = ({ block, module, onChange }) => {
     }, [block.values, loadingStates, errorStates, onChange, fetchExternalData]);
 
     return (
-        <CardContent className="h-[calc(100vh-240px)] overflow-y-auto space-y-5 w-full p-2">
+        <CardContent className="h-[calc(100vh-240px)] overflow-y-auto space-y-5 w-full p-2 py-5">
             {/* Grupos de campos */}
             {Object.entries(groups).map(([groupName, components]) => (
                 <div key={groupName} className="border rounded-lg p-3 bg-muted/10">

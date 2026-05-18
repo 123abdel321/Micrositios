@@ -49,7 +49,7 @@ const SortableBlock: React.FC<SortableBlockProps> = ({
             }`}
         >
             {/* Controles flotantes */}
-            <div className="absolute top-3 right-3 z-50 flex items-center gap-1 bg-background/90 backdrop-blur-sm rounded-md shadow-sm border opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute top-3 right-3 z-60 flex items-center gap-1 bg-background/90 backdrop-blur-sm rounded-md shadow-sm border opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
                     {...attributes}
                     {...listeners}
